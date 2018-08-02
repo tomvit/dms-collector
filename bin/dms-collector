@@ -10,6 +10,8 @@ import argparse
 import re
 import requests
 import sys
+import time
+import datetime
 import xml.etree.ElementTree as ET
 
 from time import sleep
@@ -90,6 +92,9 @@ if __name__ == "__main__":
         parser.add_argument('--noheader', required=False, help='Suppress header in the output',default=False,action='store_true')    
         parser.add_argument('--origheader', required=False, help='Use original header in the output, no normalization',default=False,action='store_true')    
         parser.add_argument('--fieldstags', required=False, help='Print only header\'s fields and tags and exit',default=False,action='store_true')            
+        parser.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
+        parser.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
+        parser.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
         
         args=parser.parse_args()
         
@@ -129,7 +134,7 @@ if __name__ == "__main__":
         
         # print header
         if not(args.noheader) or args.printheader:
-            print header
+            print args.datetimefield + "," + args.timezonefield + "," + header
 
         if args.printheader:
             sys.exit(0)
@@ -138,6 +143,10 @@ if __name__ == "__main__":
         while (count < args.count):
             # number of runs
             count = count + 1
+        
+            # current time
+            stime = time.strftime(args.timeformat, time.localtime())
+            tzone = time.strftime('%z')
         
             # get dms table values
             r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
@@ -174,7 +183,7 @@ if __name__ == "__main__":
                     output_row = evalFilter(args.filter,tags,fields)
                 
                 if output_row is True:
-                    print ','.join(x for x in
+                    print stime + "," + tzone + "," + ','.join(x for x in
                     [row.get(x) for x in header.split(',')]
                     if (x not in exclude and len(include) == 0) or x in include)
             # end for rw        

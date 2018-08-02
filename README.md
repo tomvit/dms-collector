@@ -4,8 +4,8 @@ Weblogic DMS metric collector is a python utility that can be used to retrieve D
 It reads a specified metric table and converts its data to CSV format according to a number of options. 
 
 DMS is Weblogic Dynamic Monitoring Service providing a massive amount of sensors about Weblogic and application components performance.
-It can be accessed in a number of ways, one being Weblogic Scripting Tool (wlst) and a DMS Spy application. DMS Spy is used to access DMS metric tables with a browser while DMS Spy endpoints also provide metric tables in XML format. ```dms-collector``` uses 
-the endpoints to retrieve the desired information. It was originally developed as a probe for [Universal Metric Collector](https://github.com/rstyczynski/umc) but can be used independently on UMC.
+It can be accessed in a number of ways, one being Weblogic Scripting Tool (wlst) or a DMS Spy application. DMS Spy is used to access DMS metric tables with a browser while DMS Spy endpoints also provide metric tables in XML format. ```dms-collector``` uses 
+the endpoints to retrieve the desired information. It was originally developed as a probe for [Universal Metric Collector](https://github.com/rstyczynski/umc) but can be used independently of UMC.
 
 Run ```dms-collector --help``` to get more information on how to use it. 
 

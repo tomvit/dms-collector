@@ -18,16 +18,6 @@ usage: dms-collector [-h] --count <num> --delay <seconds> --adminurl <url>
                      [--noheader] [--origheader] [--fieldstags]
                      [--timeformat <format>] [--datetimefield <name>]
                      [--timezonefield <name>]
-dms-collector: error: argument --count is required
-[vagrant@oracle bin]$ ./dms-collector --help
-usage: dms-collector [-h] --count <num> --delay <seconds> --adminurl <url>
-                     [--connect <u/p>] --table <tablename>
-                     [--filter <python-expression>]
-                     [--exclude <field1,field2,...>]
-                     [--include <field1,field2,...>] [--printheader]
-                     [--noheader] [--origheader] [--fieldstags]
-                     [--timeformat <format>] [--datetimefield <name>]
-                     [--timezonefield <name>]
 
 Weblogic DMS Spy table metric collector
 

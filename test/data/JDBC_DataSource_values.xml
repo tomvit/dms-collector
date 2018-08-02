@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE tbml>
-<tbml version='11.0' id='7031' host='ukbn05hr.dc-dublin.de' name='AIA_AdminServer' timestamp='1533158766541'>
+<tbml version='11.0' id='7031' host='server2.local' name='AIA_AdminServer' timestamp='1533158766541'>
 <table name='JDBC_DataSource' keys='Host Name Parent Process' componentId='WLS_SOA2 WLS_SOA1 WLS_SOA6'>
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3256</column>
@@ -21,7 +21,7 @@
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3173</column>
@@ -37,7 +37,7 @@
 <row>
 <column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -53,7 +53,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>280</column>
@@ -69,7 +69,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>271</column>
@@ -85,7 +85,7 @@
 <row>
 <column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -101,7 +101,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -117,7 +117,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA2]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -133,7 +133,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>286</column>
@@ -149,7 +149,7 @@
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3214</column>
@@ -165,7 +165,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>286</column>
@@ -181,7 +181,7 @@
 <row>
 <column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -197,7 +197,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -213,7 +213,7 @@
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3224</column>
@@ -229,7 +229,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -245,7 +245,7 @@
 <row>
 <column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA1]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -261,7 +261,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>267</column>
@@ -277,7 +277,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -293,7 +293,7 @@
 <row>
 <column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -309,7 +309,7 @@
 <row>
 <column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>262</column>
@@ -325,7 +325,7 @@
 <row>
 <column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
@@ -341,7 +341,7 @@
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac0]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3321</column>
@@ -357,7 +357,7 @@
 <row>
 <column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
@@ -373,7 +373,7 @@
 <row>
 <column name='Name'><![CDATA[SOADataSource-rac1]]></column>
 <column name='Parent'><![CDATA[/JDBC]]></column>
-<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Host'><![CDATA[server2.local]]></column>
 <column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
 <column name='ServerName'><![CDATA[WLS_SOA6]]></column>
 <column name='ConnectionOpenCount.count' type='INTEGER'>3277</column>

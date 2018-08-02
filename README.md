@@ -44,7 +44,7 @@ In order to test ```dms-collector``` when you do not have an access to a running
 a simple http server running in nodejs that simulates DMS Spy endpoints for sample metric tables. 
 This server is available in the test directory of this repository. The server requires [nodejs](https://nodejs.org/en/) to be available in your system. 
 
-In order to run the testing server, run the following command in the test directory:
+In order to run the testing server, run the following command in the ```test/local-server``` directory:
 
 ```
 node http-server.js 

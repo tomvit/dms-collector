@@ -44,7 +44,7 @@ http.createServer(function (req, res) {
   var pathname = url.parse(req.url).pathname;
   var queryData = url.parse(req.url, true).query;
   
-  filename = "data/" + queryData.table + (queryData.description === "true" ? "_descr" : "_values") + ".xml";
+  filename = __dirname  + "/../data/" + queryData.table + (queryData.description === "true" ? "_descr" : "_values") + ".xml";
   console.log(`requested file: ${filename}`)
 
   fs.exists(filename, function (exist) {

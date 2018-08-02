@@ -112,7 +112,7 @@ if __name__ == "__main__":
             try:
                 eval(args.filter)
             except Exception as e:
-                if re.match(r".*invalid syntax.*|.*is not defined.*", str(e)):
+                if re.match(r".*invalid syntax.*", str(e)):
                     raise Exception("The filter '%s' is not a valid python expression (%s)!\n\n"%(args.filter,str(e)))
         
         # diable header when printing fields and tags only

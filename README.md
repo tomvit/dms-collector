@@ -87,7 +87,7 @@ server2.local,WLS_SOA6,62,5,210,WLS_SOA6:8061,0,1,PortalEventSyncAQ1DS,31,5,42.0
 server2.local,WLS_SOA6,978,3277,156912,WLS_SOA6:8061,0,8,SOADataSource-rac1,26,3277,47.882819652120844,3254,/JDBC 
 ```
  
-In order to exclude fields ```Process``` and ```Process``` from the output, run the following command:
+In order to exclude fields ```Process``` and ```Parent``` from the output, run the following command:
 
 ```
 dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Process,Parent

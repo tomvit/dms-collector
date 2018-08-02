@@ -56,7 +56,8 @@ optional arguments:
   --datetimefield <name>
                         datetime header field name (default is 'datetime')
   --timezonefield <name>
-                        time zone header field name (default is 'timezone')```
+                        time zone header field name (default is 'timezone')
+```
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
 a simple http server running in nodejs that simulates DMS Spy endpoints for sample metric tables. 

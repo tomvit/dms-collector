@@ -5,7 +5,7 @@ It reads a specified metric table and converts its data to CSV format according 
 
 DMS is Weblogic Dynamic Monitoring Service providing a massive amount of sensors about Weblogic and application components performance.
 It can be accessed in a number of ways, one being Weblogic Scripting Tool (wlst) and a DMS Spy application. DMS Spy is used to access DMS metric tables with a browser while DMS Spy endpoints also provide metric tables in XML format. ```dms-collector``` uses 
-the endpoints to retrieve the desired information. 
+the endpoints to retrieve the desired information. It was originally developed as a probe for [Universal Metric Collector](https://github.com/rstyczynski/umc) but can be used independently on UMC.
 
 Run ```dms-collector --help``` to get more information on how to use it. 
 
@@ -42,7 +42,7 @@ optional arguments:
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
 a simple http server running in nodejs that simulates DMS Spy endpoints for sample metric tables. 
-This server is available in the test directory of this repository. The server requires nodejs is available in your system. 
+This server is available in the test directory of this repository. The server requires [nodejs](https://nodejs.org/en/) to be available in your system. 
 
 In order to run the testing server, run the following command in the test directory:
 

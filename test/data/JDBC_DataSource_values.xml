@@ -1,0 +1,390 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE tbml>
+<tbml version='11.0' id='7031' host='ukbn05hr.dc-dublin.de' name='AIA_AdminServer' timestamp='1533158766541'>
+<table name='JDBC_DataSource' keys='Host Name Parent Process' componentId='WLS_SOA2 WLS_SOA1 WLS_SOA6'>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3256</column>
+<column name='ConnectionCreate.time' type='LONG'>155858</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3256</column>
+<column name='ConnectionCreate.minTime' type='LONG'>25</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>1019</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>47.86793611793612</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>4</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3233</column>
+</row>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3173</column>
+<column name='ConnectionCreate.time' type='LONG'>151602</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3173</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>1038</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>47.77875827292783</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>5</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3150</column>
+</row>
+<row>
+<column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>183</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>33</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>42</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>36.6</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>280</column>
+<column name='ConnectionCreate.time' type='LONG'>12010</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>280</column>
+<column name='ConnectionCreate.minTime' type='LONG'>28</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>450</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>42.892857142857146</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>3</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>256</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>271</column>
+<column name='ConnectionCreate.time' type='LONG'>12211</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>271</column>
+<column name='ConnectionCreate.minTime' type='LONG'>27</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>530</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>45.05904059040591</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>3</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>243</column>
+</row>
+<row>
+<column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>244</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>40</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>58</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>48.8</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>30</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>30</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>30</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>30.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA2:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA2]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>32</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>32</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>32</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>32.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>286</column>
+<column name='ConnectionCreate.time' type='LONG'>12975</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>286</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>681</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>45.36713286713287</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>3</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>269</column>
+</row>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3214</column>
+<column name='ConnectionCreate.time' type='LONG'>152290</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3214</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>985</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>47.38332296204107</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>6</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3198</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>286</column>
+<column name='ConnectionCreate.time' type='LONG'>12861</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>286</column>
+<column name='ConnectionCreate.minTime' type='LONG'>28</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>295</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>44.96853146853147</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>4</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>272</column>
+</row>
+<row>
+<column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>201</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>32</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>69</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>40.2</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>56</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>56</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>56</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>56.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3224</column>
+<column name='ConnectionCreate.time' type='LONG'>155426</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3224</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>944</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>48.209057071960295</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>5</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3205</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>80</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>80</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>80</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>80.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn05hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA1:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA1]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>247</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>38</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>84</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>49.4</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>267</column>
+<column name='ConnectionCreate.time' type='LONG'>12183</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>267</column>
+<column name='ConnectionCreate.minTime' type='LONG'>30</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>255</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>45.62921348314607</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>3</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>247</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>35</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>35</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>35</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>35.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[OraclePIMDataSourceDS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>613</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>33</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>383</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>122.6</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[XrefDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>262</column>
+<column name='ConnectionCreate.time' type='LONG'>10965</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>262</column>
+<column name='ConnectionCreate.minTime' type='LONG'>29</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>101</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>41.85114503816794</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>4</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>244</column>
+</row>
+<row>
+<column name='Name'><![CDATA[EDNDataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>1</column>
+<column name='ConnectionCreate.time' type='LONG'>71</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>1</column>
+<column name='ConnectionCreate.minTime' type='LONG'>71</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>71</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>71.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>1</column>
+</row>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac0]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3321</column>
+<column name='ConnectionCreate.time' type='LONG'>158347</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3321</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>1013</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>47.68051791629028</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>8</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3302</column>
+</row>
+<row>
+<column name='Name'><![CDATA[PortalEventSyncAQ1DS]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>5</column>
+<column name='ConnectionCreate.time' type='LONG'>210</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>5</column>
+<column name='ConnectionCreate.minTime' type='LONG'>31</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>62</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>42.0</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>1</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>0</column>
+</row>
+<row>
+<column name='Name'><![CDATA[SOADataSource-rac1]]></column>
+<column name='Parent'><![CDATA[/JDBC]]></column>
+<column name='Host'><![CDATA[ukbn06hr.dc-dublin.de]]></column>
+<column name='Process'><![CDATA[WLS_SOA6:8061]]></column>
+<column name='ServerName'><![CDATA[WLS_SOA6]]></column>
+<column name='ConnectionOpenCount.count' type='INTEGER'>3277</column>
+<column name='ConnectionCreate.time' type='LONG'>156912</column>
+<column name='ConnectionCreate.completed' type='INTEGER'>3277</column>
+<column name='ConnectionCreate.minTime' type='LONG'>26</column>
+<column name='ConnectionCreate.maxTime' type='LONG'>978</column>
+<column name='ConnectionCreate.avg' type='DOUBLE'>47.882819652120844</column>
+<column name='ConnectionCreate.active' type='INTEGER'>0</column>
+<column name='ConnectionCreate.maxActive' type='INTEGER'>8</column>
+<column name='ConnectionCloseCount.count' type='INTEGER'>3254</column>
+</row>
+</table>
+</tbml>

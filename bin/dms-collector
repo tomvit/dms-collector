@@ -1,0 +1,191 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+#
+# dms-collector - a tool to retrieve dms table values from dms spy application on 
+# defined intervals and convert them to csv format.
+# 
+# 08-2018, Tomas Vitvar, tomas@vitvar.com
+
+import argparse
+import re
+import requests
+import sys
+import xml.etree.ElementTree as ET
+
+from time import sleep
+
+# input arguments
+args=None
+username=None
+password=None
+
+# normalize header names
+def normalize(header):
+    if args.origheader == False:
+        return header.replace(".","_")
+    else:
+        return header
+
+# check reg exp pattern and writes error message and exits when it does not match
+def checkPattern(str, pattern, errormsg):
+    p = re.compile(pattern)
+    if not p.match(str):
+        raise Exception(errormsg)
+
+# retrieves data using HTTP get
+def retrieveData(url):
+    if username is None:
+        r = requests.get(url)
+    else:
+        r = requests.get(url, auth=(username, password))        
+    r.raise_for_status()
+    return r
+
+# evaluates is str is number (int or float)
+def isNumber(str):
+    p = re.compile(r'^[\+\-]?[0-9]*(\.[0-9]+)?$')
+    return str != '' and p.match(str)    
+
+# chck positive int type for argparser
+def check_positive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+# *** evaluates filter on the row's tags and fields values        
+def evalFilter(filter, tags, fields):
+    try:
+        for k,v in tags.items():
+            if v is not None:
+                exec(k + "=\"" + v + "\"")
+        for k,v in fields.items():
+            if v is not None:
+                exec(k + "=" + str(v))
+        return eval(filter)
+    except Exception as e:
+        #sys.stderr.write("Error when evaluating the filter '%s': %s!\n" % (filter, e)) 
+        return False      
+
+# gets tags and fields from the row
+def getTagsFields(row): 
+    tags   = { k:str(v)   for k, v in row.items() if not(isNumber(v)) }
+    fields = { k:float(v) for k, v in row.items() if isNumber(v) }                            
+    return tags, fields
+    
+# *** MAIN
+if __name__ == "__main__":    
+    try:
+        # arguments
+        parser = argparse.ArgumentParser(description='Weblogic DMS Spy table metric collector')
+        parser.add_argument('--count', required=True, help='Number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
+        parser.add_argument('--delay', required=True, help='Delay in seconds between runs',metavar='<seconds>',type=check_positive)
+        parser.add_argument('--adminurl', required=True, help='Weblogic Admin server url where DMS Spy app us running',metavar='<url>')
+        parser.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
+        parser.add_argument('--table', required=True, help='Name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
+        parser.add_argument('--filter', required=False, help='A condition that has to hold true for a row to be included in the output.',default='',metavar='<python-expression>')    
+        parser.add_argument('--exclude', required=False, help='List of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
+        parser.add_argument('--include', required=False, help='List of header fiedls to be included in the output. All fields are included by default.',default='',metavar='<field1,field2,...>')    
+        parser.add_argument('--printheader', required=False, help='Print the table header and exit',default=False,action='store_true')    
+        parser.add_argument('--noheader', required=False, help='Suppress header in the output',default=False,action='store_true')    
+        parser.add_argument('--origheader', required=False, help='Use original header in the output, no normalization',default=False,action='store_true')    
+        parser.add_argument('--fieldstags', required=False, help='Print only header\'s fields and tags and exit',default=False,action='store_true')            
+        
+        args=parser.parse_args()
+        
+        # args checks
+        checkPattern(args.adminurl, r"^(http:)//([A-Za-z0-9\-\.]+)(:[0-9]+)?$", 
+            "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]\n"%args.adminurl)
+
+        # connection information
+        if args.connect is not None:
+            connect = args.connect.split("/",1)
+            username = connect[0]
+            if len(connect) > 1:
+                password = connect[1]
+        exclude = [x.strip() for x in args.exclude.split(',') if x != '' ]
+        include = [x.strip() for x in args.include.split(',') if x != '' ]
+        
+        # check filter expression
+        # filter regexp example: bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))
+        if args.filter != '':
+            try:
+                eval(args.filter)
+            except Exception as e:
+                if re.match(r".*invalid syntax.*|.*is not defined.*", str(e)):
+                    raise Exception("The filter '%s' is not a valid python expression (%s)!\n\n"%(args.filter,str(e)))
+        
+        # diable header when printing fields and tags only
+        if args.fieldstags:
+            args.noheader = True
+        
+        # get dms table description
+        r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + 
+            "&description=true&value=false")        
+        cdef = ET.fromstring(r.text).findall(".//columndef")
+        header = ','.join(x for x in
+            [normalize(x.get("name")) for x in cdef]
+            if (x not in exclude and len(include) == 0) or x in include)
+        
+        # print header
+        if not(args.noheader) or args.printheader:
+            print header
+
+        if args.printheader:
+            sys.exit(0)
+        
+        count = 0
+        while (count < args.count):
+            # number of runs
+            count = count + 1
+        
+            # get dms table values
+            r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
+            root = ET.fromstring(r.text)
+            
+            # iterate over all rows in the table
+            for rw in root.findall(".//row"):
+                row={}
+                for cd in cdef:
+                    key=normalize(cd.get("name"))
+                    cv = rw.find("./column[@name='%s']"%cd.get("name"))
+                    if cv is not None and cv.text is not None:
+                        if cv.text.strip() != '':
+                            row[key] = cv.text.strip()
+                        else:
+                            row[key] = "n/a"   
+                    else:
+                        row[key] = "n/a"
+                # end for cd
+                
+                # only print fields and tags on the first row and exit
+                if args.fieldstags:
+                    tags, fields = getTagsFields(row)
+                    print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
+                    print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
+                    sys.exit(0)                            
+                
+                # evaluate the filter
+                output_row = True
+                
+                # build tags and fields for this row for filter evaluation
+                if args.filter != '':
+                    tags, fields = getTagsFields(row)
+                    output_row = evalFilter(args.filter,tags,fields)
+                
+                if output_row is True:
+                    print ','.join(x for x in
+                    [row.get(x) for x in header.split(',')]
+                    if (x not in exclude and len(include) == 0) or x in include)
+            # end for rw        
+            
+            # sleeps delay seconds
+            sleep(args.delay)
+        ## end loop
+        
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except Exception as e:
+        sys.stderr.write("Error: %s\n"%str(e))
+
+# end main    

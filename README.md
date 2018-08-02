@@ -92,6 +92,11 @@ In order to include rows that match a certain server name, run the following com
 dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
 ```
 
+## TODO
+
+The current version of ```dms-collector``` will most like not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy
+of such versions uses HTML form authentication instead of HTTP basic authentication. 
+
 # License
 
 free and free as a bird

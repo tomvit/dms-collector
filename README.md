@@ -77,7 +77,8 @@ atetime,timezone,Host,ServerName,ConnectionCreate_maxTime,ConnectionCreate_compl
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,530,271,12211,WLS_SOA2:8061,0,3,XrefDataSource-rac0,27,271,45.05904059040591,243,/JDBC
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,58,5,244,WLS_SOA2:8061,0,1,OraclePIMDataSourceDS,40,5,48.8,0,/JDBC
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,30,1,30,WLS_SOA2:8061,0,1,EDNDataSource-rac1,30,1,30.0,1,/JDBC
-18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,32,1,32,WLS_SOA2:8061,0,1,EDNDataSource-rac0,32,1,32.0,1,/JDBC```
+18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,32,1,32,WLS_SOA2:8061,0,1,EDNDataSource-rac0,32,1,32.0,1,/JDBC
+```
  
 In order to exclude fields ```Process``` and ```Parent``` from the output, run the following command:
 

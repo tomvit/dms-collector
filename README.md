@@ -14,32 +14,31 @@ usage: dms-collector [-h] --count <num> --delay <seconds> --adminurl <url>
                      [--connect <u/p>] --table <tablename>
                      [--filter <python-expression>]
                      [--exclude <field1,field2,...>]
-                     [--include <field1,field2,...>] [--printheader]
-                     [--noheader] [--origheader] [--fieldstags]
-                     [--timeformat <format>] [--datetimefield <name>]
-                     [--timezonefield <name>]
+                     [--include <field1,field2,...>] [--noheader]
+                     [--origheader] [--timeformat <format>]
+                     [--datetimefield <name>] [--timezonefield <name>]
+                     [--nostrinquotes] [--nodelayadjust] [--fieldstags]
+                     [--printheader]
 
 Weblogic DMS Spy table metric collector
 
 optional arguments:
   -h, --help            show this help message and exit
-  --count <num>         Number of runs the data will be retrieved from DMS
-  --delay <seconds>     Delay in seconds between runs
-  --adminurl <url>      Weblogic Admin server url where DMS Spy app us running
+  --count <num>         number of runs the data will be retrieved from DMS
+  --delay <seconds>     delay in seconds between runs
+  --adminurl <url>      Weblogic admin server url where DMS Spy app us running
   --connect <u/p>       username/password to login to DMS Spy
-  --table <tablename>   Name of a valid DMS table which data to be retrieved
+  --table <tablename>   name of a valid DMS table which data to be retrieved
   --filter <python-expression>
-                        A condition that has to hold true for a row to be
-                        included in the output.
+                        a condition that has to hold true for a row to be
+                        included in the output
   --exclude <field1,field2,...>
-                        List of header fiedls to be excluded from the output
+                        list of header fiedls to be excluded from the output
   --include <field1,field2,...>
-                        List of header fiedls to be included in the output.
-                        All fields are included by default.
-  --printheader         Print the table header and exit
-  --noheader            Suppress header in the output
-  --origheader          Use original header in the output, no normalization
-  --fieldstags          Print only header's fields and tags and exit
+                        list of header fiedls to be included in the output
+                        (all fields are included by default)
+  --noheader            suppress header in the output
+  --origheader          use original header in the output, no normalization
   --timeformat <format>
                         Python time format for datetime field (default is
                         '%y-%m-%d %H:%M:%S')
@@ -47,6 +46,10 @@ optional arguments:
                         datetime header field name (default is 'datetime')
   --timezonefield <name>
                         time zone header field name (default is 'timezone')
+  --nostrinquotes       do not place string values in quotes
+  --nodelayadjust       disables delay time adjustment
+  --fieldstags          print only header's fields and tags and exit
+  --printheader         print the table header and exit
 ```
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
@@ -69,7 +72,7 @@ dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect web
 This will provide the following output:
 
 ```
-atetime,timezone,Host,ServerName,ConnectionCreate_maxTime,ConnectionCreate_completed,ConnectionCreate_time,Process,ConnectionCreate_active,ConnectionCreate_maxActive,Name,ConnectionCreate_minTime,ConnectionOpenCount_count,ConnectionCreate_avg,ConnectionCloseCount_count,Parent
+datetime,timezone,Host,ServerName,ConnectionCreate_maxTime,ConnectionCreate_completed,ConnectionCreate_time,Process,ConnectionCreate_active,ConnectionCreate_maxActive,Name,ConnectionCreate_minTime,ConnectionOpenCount_count,ConnectionCreate_avg,ConnectionCloseCount_count,Parent
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,1019,3256,155858,WLS_SOA2:8061,0,4,SOADataSource-rac1,25,3256,47.86793611793612,3233,/JDBC
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,1038,3173,151602,WLS_SOA2:8061,0,5,SOADataSource-rac0,26,3173,47.77875827292783,3150,/JDBC
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,42,5,183,WLS_SOA2:8061,0,1,PortalEventSyncAQ1DS,33,5,36.6,0,/JDBC
@@ -92,9 +95,18 @@ In order to include rows that match a certain server name, run the following com
 dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
 ```
 
+## Delay time adjustments
+
+You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time, the waiting time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time. The time adjustment is however disabled when the time to retrieve data from DMS takes more than 2/3 of delay time. You can disable delay time adjustment by using ```--nodelayadjust```.  
+
+## Timestamp and Timezone
+
+There first two columns added by ```dms-collector``` to the CSV output, namely datetime and timezone. This is the current local time when the data is retrieved from DMS and changes with 
+every iteration. You can change the field names for both columns by using ```--datetimefield``` and ```--timezonefield``` respectively as well as remove them from the output by using ```--exclude``` option.    
+
 ## TODO
 
-The current version of ```dms-collector``` will most like not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy
+The current version of ```dms-collector``` will most likely not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy
 of such versions uses HTML form authentication instead of HTTP basic authentication. 
 
 # License

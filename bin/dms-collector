@@ -43,7 +43,7 @@ def retrieveData(url):
     r.raise_for_status()
     return r
 
-# evaluates is str is number (int or float)
+# evaluates if str is number (int or float)
 def isNumber(str):
     p = re.compile(r'^[\+\-]?[0-9]*(\.[0-9]+)?$')
     return str != '' and p.match(str)    
@@ -75,26 +75,34 @@ def getTagsFields(row):
     fields = { k:float(v) for k, v in row.items() if isNumber(v) }                            
     return tags, fields
     
+def strinquotes(val):
+    if args.nostrinquotes or isNumber(val):
+        return val
+    else:
+        return "\"%s\""%val
+    
 # *** MAIN
 if __name__ == "__main__":    
     try:
         # arguments
         parser = argparse.ArgumentParser(description='Weblogic DMS Spy table metric collector')
-        parser.add_argument('--count', required=True, help='Number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
-        parser.add_argument('--delay', required=True, help='Delay in seconds between runs',metavar='<seconds>',type=check_positive)
-        parser.add_argument('--adminurl', required=True, help='Weblogic Admin server url where DMS Spy app us running',metavar='<url>')
+        parser.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
+        parser.add_argument('--delay', required=True, help='delay in seconds between runs',metavar='<seconds>',type=check_positive)
+        parser.add_argument('--adminurl', required=True, help='Weblogic admin server url where DMS Spy app us running',metavar='<url>')
         parser.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
-        parser.add_argument('--table', required=True, help='Name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
-        parser.add_argument('--filter', required=False, help='A condition that has to hold true for a row to be included in the output.',default='',metavar='<python-expression>')    
-        parser.add_argument('--exclude', required=False, help='List of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
-        parser.add_argument('--include', required=False, help='List of header fiedls to be included in the output. All fields are included by default.',default='',metavar='<field1,field2,...>')    
-        parser.add_argument('--printheader', required=False, help='Print the table header and exit',default=False,action='store_true')    
-        parser.add_argument('--noheader', required=False, help='Suppress header in the output',default=False,action='store_true')    
-        parser.add_argument('--origheader', required=False, help='Use original header in the output, no normalization',default=False,action='store_true')    
-        parser.add_argument('--fieldstags', required=False, help='Print only header\'s fields and tags and exit',default=False,action='store_true')            
+        parser.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
+        parser.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
+        parser.add_argument('--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
+        parser.add_argument('--include', required=False, help='list of header fiedls to be included in the output (all fields are included by default)',default='',metavar='<field1,field2,...>')    
+        parser.add_argument('--noheader', required=False, help='suppress header in the output',default=False,action='store_true')    
+        parser.add_argument('--origheader', required=False, help='use original header in the output, no normalization',default=False,action='store_true')    
         parser.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
         parser.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
         parser.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
+        parser.add_argument('--nostrinquotes', required=False, help='do not place string values in quotes',default=False,action='store_true')            
+        parser.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
+        parser.add_argument('--fieldstags', required=False, help='print only header\'s fields and tags and exit',default=False,action='store_true')            
+        parser.add_argument('--printheader', required=False, help='print the table header and exit',default=False,action='store_true')    
         
         args=parser.parse_args()
         
@@ -123,18 +131,25 @@ if __name__ == "__main__":
         # diable header when printing fields and tags only
         if args.fieldstags:
             args.noheader = True
+            
+        # remove trailing space from datatime and timezone fields from command line
+        args.datetimefield = args.datetimefield.strip()
+        args.timezonefield = args.timezonefield.strip()
         
         # get dms table description
         r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + 
             "&description=true&value=false")        
         cdef = ET.fromstring(r.text).findall(".//columndef")
-        header = ','.join(x for x in
-            [normalize(x.get("name")) for x in cdef]
-            if (x not in exclude and len(include) == 0) or x in include)
         
+        fields = [normalize(x.get("name")) for x in cdef]
+        fields.insert(0,args.datetimefield)
+        fields.insert(1,args.timezonefield)        
+        
+        header = ','.join(x for x in fields if (x not in exclude and len(include) == 0) or x in include)
+
         # print header
         if not(args.noheader) or args.printheader:
-            print args.datetimefield + "," + args.timezonefield + "," + header
+            print header
 
         if args.printheader:
             sys.exit(0)
@@ -147,6 +162,9 @@ if __name__ == "__main__":
             # current time
             stime = time.strftime(args.timeformat, time.localtime())
             tzone = time.strftime('%z')
+            
+            # current time in seconds for adustement of delay time
+            time_s = time.time()
         
             # get dms table values
             r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
@@ -155,6 +173,9 @@ if __name__ == "__main__":
             # iterate over all rows in the table
             for rw in root.findall(".//row"):
                 row={}
+                row[args.datetimefield] = stime
+                row[args.timezonefield] = tzone
+                
                 for cd in cdef:
                     key=normalize(cd.get("name"))
                     cv = rw.find("./column[@name='%s']"%cd.get("name"))
@@ -183,13 +204,27 @@ if __name__ == "__main__":
                     output_row = evalFilter(args.filter,tags,fields)
                 
                 if output_row is True:
-                    print stime + "," + tzone + "," + ','.join(x for x in
-                    [row.get(x) for x in header.split(',')]
+                    print ','.join(x for x in
+                    [strinquotes(row.get(x)) for x in header.split(',')]
                     if (x not in exclude and len(include) == 0) or x in include)
             # end for rw        
             
-            # sleeps delay seconds
-            sleep(args.delay)
+            # the time in seconds it took to retrieve the data
+            # disable it when explicitly disabled
+            if args.nodelayadjust:
+                elapsed_s = 0
+            else:
+                elapsed_s = time.time() - time_s
+            
+            # check if time adjustment makes sense
+            if elapsed_s > args.delay*0.75:
+                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more than %d seconds!\n"
+                    %(elapsed_s,args.table,args.delay*0.75,args.count * args.delay))
+                elapsed_s = 0
+            
+            # adjust the delay time and sleep
+            sleep(args.delay - elapsed_s)
+            
         ## end loop
         
     except (KeyboardInterrupt, SystemExit):

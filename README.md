@@ -97,12 +97,11 @@ dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect web
 
 ## Delay time adjustments
 
-You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time, the waiting time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time. The time adjustment is however disabled when the time to retrieve data from DMS takes more than 2/3 of delay time. You can disable delay time adjustment by using ```--nodelayadjust```.  
+You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time and the overall running time of ```dms-collector``` can be determined. The time adjustment is however disabled when the time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using ```--nodelayadjust```.  
 
 ## Timestamp and Timezone
 
-There first two columns added by ```dms-collector``` to the CSV output, namely datetime and timezone. This is the current local time when the data is retrieved from DMS and changes with 
-every iteration. You can change the field names for both columns by using ```--datetimefield``` and ```--timezonefield``` respectively as well as remove them from the output by using ```--exclude``` option.    
+```dms-collector``` adds the two columns to the CSV output, namely datetime and timezone. This is the current local time when the data is retrieved from DMS and changes with every iteration. You can change the field names for both columns by using ```--datetimefield``` and ```--timezonefield``` respectively as well as remove them from the output by using ```--exclude``` option.    
 
 ## TODO
 

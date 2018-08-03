@@ -16,6 +16,10 @@ import xml.etree.ElementTree as ET
 
 from time import sleep
 
+# version info
+VERSION="1.0"
+TBML_VERSIONS=["12.0"]
+
 # input arguments
 args=None
 username=None
@@ -41,7 +45,13 @@ def retrieveData(url):
     else:
         r = requests.get(url, auth=(username, password))        
     r.raise_for_status()
-    return r
+    root = ET.fromstring(r.text)   
+    if not(args.noversioncheck): 
+        tbml_version = root.get("version")
+        if tbml_version not in TBML_VERSIONS:
+            raise Exception("Data retrieved are of not supported tbml version %s. Supported versions are: %s"
+                %(tbml_version,','.join(TBML_VERSIONS)))
+    return root
 
 # evaluates if str is number (int or float)
 def isNumber(str):
@@ -85,30 +95,37 @@ def strinquotes(val):
 if __name__ == "__main__":    
     try:
         # arguments
-        parser = argparse.ArgumentParser(description='Weblogic DMS Spy table metric collector')
-        parser.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
-        parser.add_argument('--delay', required=True, help='delay in seconds between runs',metavar='<seconds>',type=check_positive)
-        parser.add_argument('--adminurl', required=True, help='Weblogic admin server url where DMS Spy app us running',metavar='<url>')
-        parser.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
-        parser.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
-        parser.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
-        parser.add_argument('--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
-        parser.add_argument('--include', required=False, help='list of header fiedls to be included in the output (all fields are included by default)',default='',metavar='<field1,field2,...>')    
-        parser.add_argument('--noheader', required=False, help='suppress header in the output',default=False,action='store_true')    
-        parser.add_argument('--origheader', required=False, help='use original header in the output, no normalization',default=False,action='store_true')    
-        parser.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
-        parser.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
-        parser.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
-        parser.add_argument('--nostrinquotes', required=False, help='do not place string values in quotes',default=False,action='store_true')            
-        parser.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
-        parser.add_argument('--fieldstags', required=False, help='print only header\'s fields and tags and exit',default=False,action='store_true')            
-        parser.add_argument('--printheader', required=False, help='print the table header and exit',default=False,action='store_true')    
+        parser = argparse.ArgumentParser(description='Weblogic DMS Spy table metric collector', add_help=False)
+        
+        required = parser.add_argument_group('required arguments')
+        required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
+        required.add_argument('--delay', required=True, help='delay in seconds between runs',metavar='<seconds>',type=check_positive)
+        required.add_argument('--url', required=True, help='Weblogic admin server url where DMS Spy app us running',metavar='<url>')
+        required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
+        required.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
+        
+        optional = parser.add_argument_group('optional arguments')
+        optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
+        optional.add_argument("-V", '--version', action='version', version='%(prog)s ' + VERSION + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
+        optional.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
+        optional.add_argument("-ex",'--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
+        optional.add_argument("-in",'--include', required=False, help='list of header fiedls to be included in the output (all fields are included by default)',default='',metavar='<field1,field2,...>')    
+        optional.add_argument('--noheader', required=False, help='suppress header in the output',default=False,action='store_true')    
+        optional.add_argument('--origheader', required=False, help='use original header in the output, no normalization',default=False,action='store_true')    
+        optional.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
+        optional.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
+        optional.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
+        optional.add_argument('--nostrinquotes', required=False, help='do not place string values in quotes',default=False,action='store_true')            
+        optional.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
+        optional.add_argument('--fieldstags', required=False, help='print only header\'s fields and tags and exit',default=False,action='store_true')            
+        optional.add_argument('--printheader', required=False, help='print the table header and exit',default=False,action='store_true')    
+        optional.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')    
         
         args=parser.parse_args()
         
         # args checks
-        checkPattern(args.adminurl, r"^(http:)//([A-Za-z0-9\-\.]+)(:[0-9]+)?$", 
-            "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]\n"%args.adminurl)
+        checkPattern(args.url, r"^(http:)//([A-Za-z0-9\-\.]+)(:[0-9]+)?$", 
+            "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]\n"%args.url)
 
         # connection information
         if args.connect is not None:
@@ -137,9 +154,9 @@ if __name__ == "__main__":
         args.timezonefield = args.timezonefield.strip()
         
         # get dms table description
-        r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + 
-            "&description=true&value=false")        
-        cdef = ET.fromstring(r.text).findall(".//columndef")
+        root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + 
+            "&description=true&value=false")                
+        cdef = root.findall(".//columndef")
         
         fields = [normalize(x.get("name")) for x in cdef]
         fields.insert(0,args.datetimefield)
@@ -167,8 +184,7 @@ if __name__ == "__main__":
             time_s = time.time()
         
             # get dms table values
-            r = retrieveData(args.adminurl + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
-            root = ET.fromstring(r.text)
+            root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
             
             # iterate over all rows in the table
             for rw in root.findall(".//row"):

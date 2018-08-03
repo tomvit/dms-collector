@@ -10,31 +10,33 @@ the endpoints to retrieve the desired information. It was originally developed a
 Run ```dms-collector --help``` to get more information on how to use it. 
 
 ```
-usage: dms-collector [-h] --count <num> --delay <seconds> --adminurl <url>
-                     [--connect <u/p>] --table <tablename>
-                     [--filter <python-expression>]
-                     [--exclude <field1,field2,...>]
-                     [--include <field1,field2,...>] [--noheader]
-                     [--origheader] [--timeformat <format>]
-                     [--datetimefield <name>] [--timezonefield <name>]
-                     [--nostrinquotes] [--nodelayadjust] [--fieldstags]
-                     [--printheader]
+usage: dms-collector --count <num> --delay <seconds> --url <url>
+                     [--connect <u/p>] --table <tablename> [-h] [-V]
+                     [--filter <python-expression>] [-ex <field1,field2,...>]
+                     [-in <field1,field2,...>] [--noheader] [--origheader]
+                     [--timeformat <format>] [--datetimefield <name>]
+                     [--timezonefield <name>] [--nostrinquotes]
+                     [--nodelayadjust] [--fieldstags] [--printheader]
+                     [--noversioncheck]
 
 Weblogic DMS Spy table metric collector
 
-optional arguments:
-  -h, --help            show this help message and exit
+required arguments:
   --count <num>         number of runs the data will be retrieved from DMS
   --delay <seconds>     delay in seconds between runs
-  --adminurl <url>      Weblogic admin server url where DMS Spy app us running
+  --url <url>           Weblogic admin server url where DMS Spy app us running
   --connect <u/p>       username/password to login to DMS Spy
   --table <tablename>   name of a valid DMS table which data to be retrieved
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
   --filter <python-expression>
                         a condition that has to hold true for a row to be
                         included in the output
-  --exclude <field1,field2,...>
+  -ex <field1,field2,...>, --exclude <field1,field2,...>
                         list of header fiedls to be excluded from the output
-  --include <field1,field2,...>
+  -in <field1,field2,...>, --include <field1,field2,...>
                         list of header fiedls to be included in the output
                         (all fields are included by default)
   --noheader            suppress header in the output
@@ -50,6 +52,7 @@ optional arguments:
   --nodelayadjust       disables delay time adjustment
   --fieldstags          print only header's fields and tags and exit
   --printheader         print the table header and exit
+  --noversioncheck      do not check tbml version
 ```
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use

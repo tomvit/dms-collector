@@ -205,8 +205,8 @@ if __name__ == "__main__":
                 
                 if output_row is True:
                     print ','.join(x for x in
-                    [strinquotes(row.get(x)) for x in header.split(',')]
-                    if (x not in exclude and len(include) == 0) or x in include)
+                    [strinquotes(row.get(x)) for x in header.split(',')
+                    if (x not in exclude and len(include) == 0) or x in include])
             # end for rw        
             
             # the time in seconds it took to retrieve the data

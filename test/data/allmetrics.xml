@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE tbml>
-<tbml version='11.0' id='7031' host='ukbn05hr.dc-dublin.de' name='AIA_AdminServer' timestamp='1533195637531'>
+<tbml version='11.0' id='7031' host='server1.local' name='AIA_AdminServer' timestamp='1533195637531'>
 <table name='WorkflowIdentityConfig.ConfigurationType' keys='ObjectName ServerName' componentId='WLS_SOA2 WLS_SOA1 WLS_SOA6'>
 <columndef name='RestartNeeded'>
 <description><![CDATA[Indicates whether a restart is needed.]]></description>

@@ -18,7 +18,7 @@ from time import sleep
 
 # version info
 VERSION="1.0"
-TBML_VERSIONS=["12.0"]
+TBML_VERSIONS=["11.0"]
 
 # input arguments
 args=None

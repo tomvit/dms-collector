@@ -6,6 +6,15 @@
 # 
 # 08-2018, Tomas Vitvar, tomas@vitvar.com
 
+# todo: 
+# - check for http error, do not exit but try the next iteration
+# - allow to run on a specific time in a minute --delay -X where X is number of minutes
+#    + additional parameter to define in which second of the minute it should run
+#   if the delay is greater than 1, then it should always run in minute of the hour, 
+#   e.g. -2 will run in 00, 02, 04 and not in 01 03 05... 
+# - add verbose flag
+# - allow to join two or more tables on specific column name
+
 import argparse
 import re
 import requests
@@ -184,7 +193,7 @@ if __name__ == "__main__":
             time_s = time.time()
         
             # get dms table values
-            root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
+            root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true&cached=false")
             
             # iterate over all rows in the table
             for rw in root.findall(".//row"):

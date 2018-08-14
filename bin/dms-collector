@@ -6,6 +6,15 @@
 # 
 # 08-2018, Tomas Vitvar, tomas@vitvar.com
 
+# todo: 
+# - allow to run on a specific time in a minute --delay -X where X is number of minutes
+#    + additional parameter to define in which second of the minute it should run
+#   if the delay is greater than 1, then it should always run in minute of the hour, 
+#   e.g. -2 will run in 00, 02, 04 and not in 01 03 05... 
+# - reset DMS flag
+# - add verbose flag
+# - allow to join two or more tables on specific column name
+
 import argparse
 import re
 import requests
@@ -16,9 +25,15 @@ import xml.etree.ElementTree as ET
 
 from time import sleep
 
+from requests.exceptions import *
+
 # version info
 VERSION="1.0"
 TBML_VERSIONS=["11.0"]
+
+# timeout to read data from dms spy
+TIMEOUT_CONNECT=3.05
+TIMEOUT_READ=30
 
 # input arguments
 args=None
@@ -41,9 +56,9 @@ def checkPattern(str, pattern, errormsg):
 # retrieves data using HTTP get
 def retrieveData(url):
     if username is None:
-        r = requests.get(url)
+        r = requests.get(url,timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))
     else:
-        r = requests.get(url, auth=(username, password))        
+        r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))        
     r.raise_for_status()
     root = ET.fromstring(r.text)   
     if not(args.noversioncheck): 
@@ -152,79 +167,87 @@ if __name__ == "__main__":
         # remove trailing space from datatime and timezone fields from command line
         args.datetimefield = args.datetimefield.strip()
         args.timezonefield = args.timezonefield.strip()
-        
-        # get dms table description
-        root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + 
-            "&description=true&value=false")                
-        cdef = root.findall(".//columndef")
-        
-        fields = [normalize(x.get("name")) for x in cdef]
-        fields.insert(0,args.datetimefield)
-        fields.insert(1,args.timezonefield)        
-        
-        header = ','.join(x for x in fields if (x not in exclude and len(include) == 0) or x in include)
-
-        # print header
-        if not(args.noheader) or args.printheader:
-            print header
-
-        if args.printheader:
-            sys.exit(0)
-        
+                
         count = 0
+        header = None        
         while (count < args.count):
-            # number of runs
-            count = count + 1
-        
-            # current time
-            stime = time.strftime(args.timeformat, time.localtime())
-            tzone = time.strftime('%z')
+            try:
+                # number of runs
+                count = count + 1
             
-            # current time in seconds for adustement of delay time
-            time_s = time.time()
-        
-            # get dms table values
-            root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true")
-            
-            # iterate over all rows in the table
-            for rw in root.findall(".//row"):
-                row={}
-                row[args.datetimefield] = stime
-                row[args.timezonefield] = tzone
+                # current time
+                stime = time.strftime(args.timeformat, time.localtime())
+                tzone = time.strftime('%z')
                 
-                for cd in cdef:
-                    key=normalize(cd.get("name"))
-                    cv = rw.find("./column[@name='%s']"%cd.get("name"))
-                    if cv is not None and cv.text is not None:
-                        if cv.text.strip() != '':
-                            row[key] = cv.text.strip()
+                # current time in seconds for adustement of delay time
+                time_s = time.time()
+            
+                # header
+                if header is None:
+                    # get dms table description
+                    root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + 
+                        "&description=true&value=false")                
+                    cdef = root.findall(".//columndef")
+                    
+                    fields = [normalize(x.get("name")) for x in cdef]
+                    fields.insert(0,args.datetimefield)
+                    fields.insert(1,args.timezonefield)                        
+                    header = ','.join(x for x in fields if (x not in exclude and len(include) == 0) or x in include)
+
+                    # print header
+                    if not(args.noheader) or args.printheader:
+                        print header
+                        # only print header and exit
+                        if args.printheader:
+                            sys.exit(0)
+                # end header
+            
+                # get dms table values
+                root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true&cached=false")
+                
+                # iterate over all rows in the table
+                for rw in root.findall(".//row"):
+                    row={}
+                    row[args.datetimefield] = stime
+                    row[args.timezonefield] = tzone
+                    
+                    for cd in cdef:
+                        key=normalize(cd.get("name"))
+                        cv = rw.find("./column[@name='%s']"%cd.get("name"))
+                        if cv is not None and cv.text is not None:
+                            if cv.text.strip() != '':
+                                row[key] = cv.text.strip()
+                            else:
+                                row[key] = "n/a"   
                         else:
-                            row[key] = "n/a"   
-                    else:
-                        row[key] = "n/a"
-                # end for cd
+                            row[key] = "n/a"
+                    # end for cd
+                    
+                    # only print fields and tags on the first row and exit
+                    if args.fieldstags:
+                        tags, fields = getTagsFields(row)
+                        print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
+                        print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
+                        sys.exit(0)                            
+                    
+                    # evaluate the filter
+                    output_row = True
+                    
+                    # build tags and fields for this row for filter evaluation
+                    if args.filter != '':
+                        tags, fields = getTagsFields(row)
+                        output_row = evalFilter(args.filter,tags,fields)
+                    
+                    if output_row is True:
+                        print ','.join(x for x in
+                        [strinquotes(row.get(x)) for x in header.split(',')
+                        if (x not in exclude and len(include) == 0) or x in include])
+                # end for rw        
                 
-                # only print fields and tags on the first row and exit
-                if args.fieldstags:
-                    tags, fields = getTagsFields(row)
-                    print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
-                    print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
-                    sys.exit(0)                            
-                
-                # evaluate the filter
-                output_row = True
-                
-                # build tags and fields for this row for filter evaluation
-                if args.filter != '':
-                    tags, fields = getTagsFields(row)
-                    output_row = evalFilter(args.filter,tags,fields)
-                
-                if output_row is True:
-                    print ','.join(x for x in
-                    [strinquotes(row.get(x)) for x in header.split(',')
-                    if (x not in exclude and len(include) == 0) or x in include])
-            # end for rw        
-            
+            except (ConnectionError, Timeout) as e:
+                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: %s\n"%str(e))
+                pass
+                                
             # the time in seconds it took to retrieve the data
             # disable it when explicitly disabled
             if args.nodelayadjust:
@@ -237,7 +260,7 @@ if __name__ == "__main__":
                 sys.stderr.write("[" + str(datetime.datetime.now()) + "]: It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more than %d seconds!\n"
                     %(elapsed_s,args.table,args.delay*0.75,args.count * args.delay))
                 elapsed_s = 0
-            
+                                
             # adjust the delay time and sleep
             sleep(args.delay - elapsed_s)
             
@@ -246,6 +269,6 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, SystemExit):
         pass
     except Exception as e:
-        sys.stderr.write("Error: %s\n"%str(e))
+        sys.stderr.write("[" + str(datetime.datetime.now()) + "]: %s\n"%str(e))
 
 # end main    

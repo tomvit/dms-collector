@@ -7,10 +7,6 @@
 # 08-2018, Tomas Vitvar, tomas@vitvar.com
 
 # todo: 
-# - allow to run on a specific time in a minute --delay -X where X is number of minutes
-#    + additional parameter to define in which second of the minute it should run
-#   if the delay is greater than 1, then it should always run in minute of the hour, 
-#   e.g. -2 will run in 00, 02, 04 and not in 01 03 05... 
 # - reset DMS flag
 # - add verbose flag
 # - allow to join two or more tables on specific column name
@@ -23,7 +19,7 @@ import time
 import datetime
 import xml.etree.ElementTree as ET
 
-from time import sleep
+from time import sleep, strftime
 
 from requests.exceptions import *
 
@@ -114,28 +110,36 @@ if __name__ == "__main__":
         
         required = parser.add_argument_group('required arguments')
         required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
-        required.add_argument('--delay', required=True, help='delay in seconds between runs',metavar='<seconds>',type=check_positive)
+        required.add_argument('--delay', required=True, help='delay between runs; positive value is seconds, negative value is minutes',type=int, metavar='<seconds>|-<minutes>')
         required.add_argument('--url', required=True, help='Weblogic admin server url where DMS Spy app us running',metavar='<url>')
         required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
         required.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
+
+        ruopts = parser.add_argument_group('optional running arguments')
+        ruopts.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
+        ruopts.add_argument('--secsinmin', required=False, help='a second in a minute to run each iteration when delay value is negative',default=0,type=int)
+        ruopts.add_argument('--alignminutes', required=False, help='when delay value is negative then align minutes to the first minute of an hour; this argument is only applied when delay minutes is 2 or greater',default=False,action='store_true')
         
-        optional = parser.add_argument_group('optional arguments')
-        optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
-        optional.add_argument("-V", '--version', action='version', version='%(prog)s ' + VERSION + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
-        optional.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
-        optional.add_argument("-ex",'--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
-        optional.add_argument("-in",'--include', required=False, help='list of header fiedls to be included in the output (all fields are included by default)',default='',metavar='<field1,field2,...>')    
-        optional.add_argument('--noheader', required=False, help='suppress header in the output',default=False,action='store_true')    
-        optional.add_argument('--origheader', required=False, help='use original header in the output, no normalization',default=False,action='store_true')    
-        optional.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
-        optional.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
-        optional.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
-        optional.add_argument('--nostrinquotes', required=False, help='do not place string values in quotes',default=False,action='store_true')            
-        optional.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
-        optional.add_argument('--fieldstags', required=False, help='print only header\'s fields and tags and exit',default=False,action='store_true')            
-        optional.add_argument('--printheader', required=False, help='print the table header and exit',default=False,action='store_true')    
-        optional.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')    
+        fiopts = parser.add_argument_group('optional filtering arguments')
+        fiopts.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
+        fiopts.add_argument("-ex",'--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
+        fiopts.add_argument("-in",'--include', required=False, help='list of header fiedls to be included in the output (all fields are included by default)',default='',metavar='<field1,field2,...>')    
         
+        foopts = parser.add_argument_group('optional formatting arguments')
+        foopts.add_argument('--noheader', required=False, help='suppress header in the output',default=False,action='store_true')    
+        foopts.add_argument('--origheader', required=False, help='use original header in the output, no normalization',default=False,action='store_true')    
+        foopts.add_argument('--timeformat', required=False, help='Python time format for datetime field (default is \'%%y-%%m-%%d %%H:%%M:%%S\')',default="%y-%m-%d %H:%M:%S",metavar='<format>')            
+        foopts.add_argument('--datetimefield', required=False, help='datetime header field name (default is \'datetime\')',default="datetime",metavar='<name>')            
+        foopts.add_argument('--timezonefield', required=False, help='time zone header field name (default is \'timezone\')',default="timezone",metavar='<name>')            
+        foopts.add_argument('--nostrinquotes', required=False, help='do not place string values in quotes',default=False,action='store_true')            
+        foopts.add_argument('--fieldstags', required=False, help='print only header\'s fields and tags and exit',default=False,action='store_true')            
+        foopts.add_argument('--printheader', required=False, help='print the table header and exit',default=False,action='store_true')    
+
+        otopts = parser.add_argument_group('optional other arguments')
+        otopts.add_argument("-h", "--help", action="help", help="show this help message and exit")
+        otopts.add_argument("-V", '--version', action='version', version='%(prog)s ' + VERSION + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
+        otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
+                    
         args=parser.parse_args()
         
         # args checks
@@ -168,6 +172,25 @@ if __name__ == "__main__":
         args.datetimefield = args.datetimefield.strip()
         args.timezonefield = args.timezonefield.strip()
                 
+        # wait for time of the first run if delay is in minutes
+        if args.delay < 0:
+            time_s=time.time()
+            secsinmin=time_s-int(time_s/60)*60
+            if secsinmin < args.secsinmin and args.delay == -1:
+                time_n=time_s+args.secsinmin-secsinmin
+            else:
+                time_n=int(time_s/60)*60 + args.delay*-60 + args.secsinmin
+
+            # align to the nearest minute
+            if args.alignminutes is True and args.delay != -1:
+                time_no=time_n
+                time_n=time_no-(int(time_no/60)%(args.delay*-1))*60
+                if time_n < time_s:                
+                    time_n=time_no+(int(time_no/60)%(args.delay*-1))*60
+            
+            #debug: print strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))            
+            sleep(time_n-time_s)
+                                
         count = 0
         header = None        
         while (count < args.count):
@@ -254,15 +277,22 @@ if __name__ == "__main__":
                 elapsed_s = 0
             else:
                 elapsed_s = time.time() - time_s
-            
+
+            # calculate delay
+            if args.delay < 0:
+                n=int(time_s/60)*60 + args.delay*-60 + args.secsinmin
+                delay_sec=n-time_s
+            else:
+                delay_sec = args.delay
+
             # check if time adjustment makes sense
-            if elapsed_s > args.delay*0.75:
-                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more than %d seconds!\n"
-                    %(elapsed_s,args.table,args.delay*0.75,args.count * args.delay))
+            if elapsed_s > delay_sec*0.75:
+                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
+                    %(elapsed_s,args.table,delay_sec))
                 elapsed_s = 0
-                                
+            
             # adjust the delay time and sleep
-            sleep(args.delay - elapsed_s)
+            sleep(delay_sec - elapsed_s)
             
         ## end loop
         
@@ -270,5 +300,6 @@ if __name__ == "__main__":
         pass
     except Exception as e:
         sys.stderr.write("[" + str(datetime.datetime.now()) + "]: %s\n"%str(e))
+        raise
 
 # end main    

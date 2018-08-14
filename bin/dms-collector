@@ -36,6 +36,20 @@ args=None
 username=None
 password=None
 
+# messages to print out
+def write_msg(type,message):
+    sys.stderr.write("[" + str(datetime.datetime.now()) + "] - %s: %s\n"%(type,message))
+    
+def write_error(message):
+    write_msg("ERR", message)
+
+def write_warn(message):
+    write_msg("WRN", message)
+
+def write_info(message):
+    if args.verbose:
+        write_msg("INF", message)
+
 # normalize header names
 def normalize(header):
     if args.origheader == False:
@@ -51,6 +65,7 @@ def checkPattern(str, pattern, errormsg):
 
 # retrieves data using HTTP get
 def retrieveData(url):
+    write_info("Retrieving data from %s."%url)
     if username is None:
         r = requests.get(url,timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))
     else:
@@ -138,6 +153,7 @@ if __name__ == "__main__":
         otopts = parser.add_argument_group('optional other arguments')
         otopts.add_argument("-h", "--help", action="help", help="show this help message and exit")
         otopts.add_argument("-V", '--version', action='version', version='%(prog)s ' + VERSION + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
+        otopts.add_argument('--verbose', required=False, help='output details to stderr',default=False,action='store_true')
         otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
                     
         args=parser.parse_args()
@@ -174,6 +190,8 @@ if __name__ == "__main__":
                 
         # wait for time of the first run if delay is in minutes
         if args.delay < 0:
+            write_info("The delay is %d minute(s), calculating the time to wake up."%(args.delay*-1))
+            
             time_s=time.time()
             secsinmin=time_s-int(time_s/60)*60
             if secsinmin < args.secsinmin and args.delay == -1:
@@ -183,12 +201,14 @@ if __name__ == "__main__":
 
             # align to the nearest minute
             if args.alignminutes is True and args.delay != -1:
+                write_info("The time will be aligned to the next %d-thn minute."%(args.delay*-1))
                 time_no=time_n
                 time_n=time_no-(int(time_no/60)%(args.delay*-1))*60
                 if time_n < time_s:                
                     time_n=time_no+(int(time_no/60)%(args.delay*-1))*60
             
-            #debug: print strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))            
+            write_info("Sleeping for %d seconds, will wake up at %s."%(time_n-time_s,strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))))
+            
             sleep(time_n-time_s)
                                 
         count = 0
@@ -277,6 +297,7 @@ if __name__ == "__main__":
                 elapsed_s = 0
             else:
                 elapsed_s = time.time() - time_s
+                write_info("It took %d seconds to retrieve data, will adjust waiting time accordingly."%elapsed_s)
 
             # calculate delay
             if args.delay < 0:
@@ -287,9 +308,13 @@ if __name__ == "__main__":
 
             # check if time adjustment makes sense
             if elapsed_s > delay_sec*0.75:
-                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
+                write_warn("It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
                     %(elapsed_s,args.table,delay_sec))
                 elapsed_s = 0
+            
+            # say what we are doing
+            write_info("Sleeping for %d seconds, will wake up at %s"
+                %(delay_sec - elapsed_s, strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()+delay_sec-elapsed_s))))
             
             # adjust the delay time and sleep
             sleep(delay_sec - elapsed_s)

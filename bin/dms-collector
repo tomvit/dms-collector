@@ -107,9 +107,9 @@ def checkPattern(str, pattern, errormsg):
 def callDms(url):
     write_info("Calling DMS at %s."%url)
     if username is None:
-        r = requests.get(url,timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))
+        r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout))
     else:
-        r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))        
+        r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, args.readtimeout))        
     r.raise_for_status()
     return r
 
@@ -292,7 +292,6 @@ if __name__ == "__main__":
         group2.add_argument('--table', help='name of a valid DMS table which data to be retrieved',default=None,metavar='<tablename>')    
         group2.add_argument('--dmsreset',help='reset dms aggregated data for <path>',default=None,metavar='<path>')
         group2.add_argument('--recurse',help='reset dms operation recurse parameter, default is \'all\'',default='all',metavar='<value>')
-        
 
         ruopts = parser.add_argument_group('optional arguments when --delay argument is used')
         ruopts.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
@@ -325,9 +324,14 @@ if __name__ == "__main__":
         otopts.add_argument('--verbose', required=False, help='output details to stderr',default=False,action='store_true')
         otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
         otopts.add_argument('--namedpipe', required=False, help='location of a named pipe used to read and write events',default=EVENTS_PIPENAME,metavar='<path>')    
+        otopts.add_argument('--readtimeout', required=False, help='htto read timeout, default is %s seconds'%TIMEOUT_READ,type=float,default=TIMEOUT_READ,metavar='<secs>')    
                     
         args=parser.parse_args()
         
+        # parameter checks
+        if args.delay != 0 and args.runonevents > 0:
+            raise Exception("There cannot be both delay and runonevents defined!")
+            
         # TODO: check params for consistency
         # 
         
@@ -495,7 +499,13 @@ if __name__ == "__main__":
                     write_info("Resetting dms at '%s'"%args.dmsreset)                    
                     
                     # dms reset operation call
-                    callDms(DMSREQUEST_RESET%(args.url,args.dmsreset,args.recurse))
+                    try:
+                        callDms(DMSREQUEST_RESET%(args.url,args.dmsreset,args.recurse))
+                    except Exception as e:
+                        write_error("Error occured when reseting DMS at %s"%(DMSREQUEST_RESET%(args.url,args.dmsreset,args.recurse)))
+                        raise e
+                    
+                    # remeber the last time dms reset was called
                     lastDMSResetTime=time.time()
 
                 

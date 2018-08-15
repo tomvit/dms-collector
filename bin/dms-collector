@@ -8,14 +8,13 @@
 
 # todo: 
 # - reset DMS flag
-# - allow to join two or more tables on specific column name
 
 import os
 import signal
 import argparse
 import re
 import requests
-import sys
+import sys, traceback
 import time
 import datetime
 import xml.etree.ElementTree as ET
@@ -29,12 +28,25 @@ from requests.exceptions import *
 VERSION="1.0"
 TBML_VERSIONS=["11.0"]
 
+# DMS REQESTS URLs
+# before changing the urls below check their param bindings as per their usage
+DMSREQUEST_HEADER="%s/dms/Spy?format=xml&table=%s&description=true&value=false"
+DMSREQUEST_DATA="%s/dms/Spy?format=xml&table=%s&value=true&cached=false"
+DMSREQUEST_RESET="%s/dms/Spy?operation=reset&format=raw&cache=refreshall&name=%s&recurse=%s"
+
 # timeout to read data from dms spy
 TIMEOUT_CONNECT=3.05
 TIMEOUT_READ=30
 
-# named pipe for event communication
+# time between two consecutive dms rests
+# a warning will only be generated when this time will be exceeded
+DMSRESET_MINTIME=20
+
+# default name for the named pipe for event communication
+# can be changed by --namedpipe argument
 EVENTS_PIPENAME="/tmp/dms-collector-events"
+
+# maximum buffer size that will be read from the pipe at once
 EVENTS_BUFFERSIZE=1024
 
 # input arguments
@@ -42,19 +54,41 @@ args=None
 username=None
 password=None
 
-# messages to print out
-def write_msg(type,message):
-    sys.stderr.write("[" + str(datetime.datetime.now()) + "] - %s: %s\n"%(type,message))
+# messages colors
+class bcolors:
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
     
-def write_error(message):
-    write_msg("ERR", message)
+# messages types
+MSG_INFO  = "INF"
+MSG_ERROR = "ERR"
+MSG_WARN  = "WRN"
+    
+# *** print info message
+def write_msg(type, msg):
+    # colors
+    out_color = ''; end_color_out = ''
+    error_color=bcolors.FAIL; end_color_error = bcolors.ENDC
+    if type == MSG_ERROR and sys.stderr.isatty():
+        out_color = bcolors.FAIL; end_color_out = bcolors.ENDC
+    if type == MSG_WARN and sys.stderr.isatty():
+        out_color = bcolors.WARNING; end_color_out = bcolors.ENDC
+
+    # only write info messages in verbose mode
+    if ((args.verbose) and type == MSG_INFO) or type == MSG_ERROR or type == MSG_WARN:
+        # write the message to out stream
+        sys.stderr.write("[" + str(datetime.datetime.now()) + "]-" + type + ":" + out_color + " " + msg + end_color_out + "\n")  
+        sys.stderr.flush()
+        
+def write_info(message):
+    write_msg(MSG_INFO, message)
 
 def write_warn(message):
-    write_msg("WRN", message)
+    write_msg(MSG_WARN, message)
 
-def write_info(message):
-    if args.verbose:
-        write_msg("INF", message)
+def write_error(message):
+    write_msg(MSG_ERROR, message)
 
 # normalize header names
 def normalize(header):
@@ -69,14 +103,19 @@ def checkPattern(str, pattern, errormsg):
     if not p.match(str):
         raise Exception(errormsg)
 
-# retrieves data using HTTP get
-def retrieveData(url):
-    write_info("Retrieving data from %s."%url)
+# calling dms at url specified 
+def callDms(url):
+    write_info("Calling DMS at %s."%url)
     if username is None:
         r = requests.get(url,timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))
     else:
         r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, TIMEOUT_READ))        
     r.raise_for_status()
+    return r
+
+# retrieves data using HTTP get
+def retrieveData(url):
+    r = callDms(url)
     root = ET.fromstring(r.text)   
     if not(args.noversioncheck): 
         tbml_version = root.get("version")
@@ -84,10 +123,6 @@ def retrieveData(url):
             raise Exception("Data retrieved are of not supported tbml version %s. Supported versions are: %s"
                 %(tbml_version,','.join(TBML_VERSIONS)))
     return root
-
-# signal termination handler for graceful shutdown
-def signal_quit(signal, frame):
-    write_info("Exiting...")
 
 # evaluates if str is number (int or float)
 def isNumber(str):
@@ -131,7 +166,7 @@ def strinquotes(val):
 def emitEvent(event):        
     result = False
     try:
-        pipeout = os.open(EVENTS_PIPENAME, os.O_WRONLY | os.O_NONBLOCK)
+        pipeout = os.open(args.namedpipe, os.O_WRONLY | os.O_NONBLOCK)
         try:
             os.write(pipeout, event + "\n"); 
             result = True
@@ -146,7 +181,7 @@ def emitEvent(event):
 
 # read events from a named pipe separated by newline
 def readEvents(pipein,timeout):
-    if os.path.exists(EVENTS_PIPENAME):
+    if os.path.exists(args.namedpipe):
         buffer = ""
         time_s=time.time()
         while time.time()-time_s < timeout:
@@ -166,51 +201,74 @@ def readEvents(pipein,timeout):
         # end while
         
         events=[x for x in buffer.split("\n") if len(x) > 0]
-        if len(events) > 0 and not(re.match(r'.+\n$',buffer)):   
+        if len(events) > 0 and not(re.match(r'(.+\n)*.+\n$',buffer)):   
             write_error("An invalid event with no newline received within a timeout of %d seconds: %s"
-                %(events[len(events)-1],timeout))
+                %(timeout,events[len(events)-1]))
         return events
     # if
     return []
 # readEvents
 
+def openPipeForReading():
+    return os.open(args.namedpipe, os.O_RDONLY | os.O_NONBLOCK)
+
+def closePipe(pipehandler):
+    if pipehandler is not None:
+        try:
+            os.close(pipehandler)
+        except Exception as e:
+            write_error("Error occured when closing the pipe: %s"%str(e))
+            
 # wait for events to occur
 def waitForEvents(pipein):
+    thispipe=pipein
+    if thispipe is None:
+        thispipe = openPipeForReading()
     try:
+        # report where we are
+        write_info("Events loop, expecting %d event(s) within a timeout of %d seconds."%(args.runonevents,args.maxtime))
+            
+        # init and start the loop
         numEvents=0
         time_s=0
-        while numEvents < args.runonevents and (time_s == 0 or time.time()-time_s < args.maxtime):
-            events = readEvents(pipein, 1)
+        while numEvents < args.runonevents and (args.maxtime == 0 or time_s == 0 or time.time()-time_s < args.maxtime):
+            events = readEvents(thispipe, 1)
             if len(events)>0:
-                write_info("Events occured: [%s]"%";".join(events))
+                write_info("%d event(s) occured: [%s]"%(len(events),";".join(events)))
             numEvents += len(events)
 
-            if numEvents == 0:
-                write_info("Waiting for the first event...")
+            if numEvents < args.runonevents:
+                # report where we are
+                write_info("Waiting for event %d out of %d..."%(numEvents+1,args.runonevents))
 
-            # start time to calc the timeout between the first and last events
-            if numEvents > 0 and time_s == 0:
-                time_s = time.time()
-                write_info("%d event(s) occurred, there are %d remaining events that should occur within the next %d seconds."
-                    %(len(events),args.runonevents-len(events),args.maxtime))
-            
-            # sleep a bit
-            sleep(0.5)
+                # start time to calc the timeout between the first and last events
+                if numEvents > 0 and time_s == 0:
+                    time_s = time.time()
+                    write_info("%d event(s) occurred, there are %d remaining events that should occur within the next %d seconds."
+                        %(len(events),args.runonevents-len(events),args.maxtime))
+                
+                # sleep a bit
+                sleep(0.5)
             
         # show warning if not all events occurred
         if numEvents < args.runonevents:
-            write_warn("Ended on timeout of %d seconds, %d event(s) occurred which is less than desired %d."
+            write_warn("Ended on timeout of %d seconds, %d event(s) occurred which is less than expected %d."
                 %(args.maxtime,numEvents,args.runonevents))
         
         # show warning if more events occurred than expected
         if numEvents > args.runonevents:
-            write_warn("More events occured (%d) than expected (%d)."%(numEvents,args.runonevents))
+            write_warn("More events occured (%d) than expected (%s)."%(numEvents,args.runonevents))
                 
         # success
         return True
     except Exception as e:
-        write_error("Error occurred when waiting for events: %s"%str(e))
-        raise      
+        write_error("Fatal error when waiting for events!")
+        traceback.print_exc(file=sys.stdout)
+        raise     
+    finally:
+        if pipein is None:
+            closePipe(thispipe)
+             
 # waitForEvents
     
 # *** MAIN
@@ -226,11 +284,15 @@ if __name__ == "__main__":
         required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
         required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
 
-        group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('--delay', help='delay between runs; positive value is seconds, negative value is minutes',default=0,type=int, metavar='<seconds>|-<minutes>')
-        group.add_argument('--runonevents',help='run when <num> events occur',default=0,metavar='<num>',type=check_positive)
+        group1 = parser.add_mutually_exclusive_group(required=True)
+        group1.add_argument('--delay', help='delay between runs; positive value is seconds, negative value is minutes',default=0,type=int, metavar='<seconds>|-<minutes>')
+        group1.add_argument('--runonevents',help='run when <num> events occur',default=0,metavar='<num>',type=check_positive)
 
-        required.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
+        group2 = parser.add_mutually_exclusive_group(required=True)
+        group2.add_argument('--table', help='name of a valid DMS table which data to be retrieved',default=None,metavar='<tablename>')    
+        group2.add_argument('--dmsreset',help='reset dms aggregated data for <path>',default=None,metavar='<path>')
+        group2.add_argument('--recurse',help='reset dms operation recurse parameter, default is \'all\'',default='all',metavar='<value>')
+        
 
         ruopts = parser.add_argument_group('optional arguments when --delay argument is used')
         ruopts.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
@@ -239,7 +301,8 @@ if __name__ == "__main__":
         ruopts.add_argument('--emitevents', required=False, help='emits an event after each run',default=False,action='store_true')
 
         reopts = parser.add_argument_group('optional arguments when --runonevents argument is used')
-        reopts.add_argument('--maxtime', required=False, help='maximum time in seconds between the first and the last event before the iteration will be triggered',default=20,type=int,metavar='<secs>')    
+        reopts.add_argument('--maxtime', required=False, help='maximum time in seconds between the first and the last event before the iteration will be triggered, default is 20; set this to 0 to wait indefinitely.',default=20,type=int,metavar='<secs>')    
+        reopts.add_argument('--contacceptevents', required=False, help='accept events during the whole running timme; when not set, events will not be accepted during DMS callouts',default=False,action='store_true')    
 
         fiopts = parser.add_argument_group('optional filtering arguments')
         fiopts.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
@@ -261,19 +324,21 @@ if __name__ == "__main__":
         otopts.add_argument("-V", '--version', action='version', version='%(prog)s ' + VERSION + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
         otopts.add_argument('--verbose', required=False, help='output details to stderr',default=False,action='store_true')
         otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
+        otopts.add_argument('--namedpipe', required=False, help='location of a named pipe used to read and write events',default=EVENTS_PIPENAME,metavar='<path>')    
                     
         args=parser.parse_args()
         
-        # register signals to quit the process
-        #for sig in ('TERM', 'HUP', 'INT'):
-        #    signal.signal(getattr(signal, 'SIG'+sig), signal_quit);
+        # TODO: check params for consistency
+        # 
         
         # create the named pipe if it does not exist
-        if not os.path.exists(EVENTS_PIPENAME):
-            os.mkfifo(EVENTS_PIPENAME)  
+        if not os.path.exists(args.namedpipe):
+            os.mkfifo(args.namedpipe)  
             
-        if args.runonevents > 0:
-            pipein = os.open(EVENTS_PIPENAME, os.O_RDONLY | os.O_NONBLOCK)
+        if args.runonevents > 0 and args.contacceptevents:
+            pipein = openPipeForReading()
+        else:
+            pipein = None
                 
         # args checks
         checkPattern(args.url, r"^(http:)//([A-Za-z0-9\-\.]+)(:[0-9]+)?$", 
@@ -308,7 +373,7 @@ if __name__ == "__main__":
                 
         # wait for time of the first run if delay is in minutes
         if args.delay < 0:
-            write_info("The delay is %d minute(s), calculating the time to wake up."%(args.delay*-1))
+            write_info("The delay is %d minute(s), calculating time to wake up."%(args.delay*-1))
             
             time_s=time.time()
             secsinmin=time_s-int(time_s/60)*60
@@ -328,12 +393,15 @@ if __name__ == "__main__":
             write_info("Sleeping for %d seconds, will wake up at %s."
                 %(time_n-time_s,strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))))        
             sleep(time_n-time_s)
-        
+
+        # wait for events to occur
         if args.runonevents > 0:
             waitForEvents(pipein)
-                                    
+                    
+        # main loop                
         count = 0
-        header = None        
+        header = None  
+        lastDMSResetTime = None      
         while (count < args.count):
             error = False
             try:
@@ -347,67 +415,89 @@ if __name__ == "__main__":
                 # current time in seconds for adustement of delay time
                 time_s = time.time()
             
-                # header
-                if header is None:
-                    # get dms table description
-                    root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + 
-                        "&description=true&value=false")                
-                    cdef = root.findall(".//columndef")
-                    
-                    fields = [normalize(x.get("name")) for x in cdef]
-                    fields.insert(0,args.datetimefield)
-                    fields.insert(1,args.timezonefield)                        
-                    header = ','.join(x for x in fields if (x not in exclude and len(include) == 0) or x in include)
+                # read table data
+                if args.table is not None:        
+                    # header
+                    if header is None:
+                        # report what we are doing
+                        write_info("Reading header for table %s"%args.table)
+                        
+                        # get dms table description
+                        root = retrieveData(DMSREQUEST_HEADER%(args.url,args.table))                
+                        cdef = root.findall(".//columndef")
+                        
+                        fields = [normalize(x.get("name")) for x in cdef]
+                        fields.insert(0,args.datetimefield)
+                        fields.insert(1,args.timezonefield)                        
+                        header = ','.join(x for x in fields if (x not in exclude and len(include) == 0) or x in include)
 
-                    # print header
-                    if not(args.noheader) or args.printheader:
-                        print header
-                        # only print header and exit
-                        if args.printheader:
-                            raise SystemExit()
-                # end header
-            
-                # get dms table values
-                root = retrieveData(args.url + "/dms/Spy?format=xml&table=" + args.table + "&value=true&cached=false")
+                        # print header
+                        if not(args.noheader) or args.printheader:
+                            print header
+                            # only print header and exit
+                            if args.printheader:
+                                raise SystemExit()
+                    # end header
+
+                    # report what we are doing
+                    write_info("Reading data for table %s"%args.table)
                 
-                # iterate over all rows in the table
-                for rw in root.findall(".//row"):
-                    row={}
-                    row[args.datetimefield] = stime
-                    row[args.timezonefield] = tzone
+                    # get dms table values
+                    root = retrieveData(DMSREQUEST_DATA%(args.url,args.table))
                     
-                    for cd in cdef:
-                        key=normalize(cd.get("name"))
-                        cv = rw.find("./column[@name='%s']"%cd.get("name"))
-                        if cv is not None and cv.text is not None:
-                            if cv.text.strip() != '':
-                                row[key] = cv.text.strip()
+                    # iterate over all rows in the table
+                    for rw in root.findall(".//row"):
+                        row={}
+                        row[args.datetimefield] = stime
+                        row[args.timezonefield] = tzone
+                        
+                        for cd in cdef:
+                            key=normalize(cd.get("name"))
+                            cv = rw.find("./column[@name='%s']"%cd.get("name"))
+                            if cv is not None and cv.text is not None:
+                                if cv.text.strip() != '':
+                                    row[key] = cv.text.strip()
+                                else:
+                                    row[key] = "n/a"   
                             else:
-                                row[key] = "n/a"   
-                        else:
-                            row[key] = "n/a"
-                    # end for cd
+                                row[key] = "n/a"
+                        # end for cd
+                        
+                        # only print fields and tags on the first row and exit
+                        if args.fieldstags:
+                            tags, fields = getTagsFields(row)
+                            print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
+                            print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
+                            raise SystemExit()                    
+                        
+                        # evaluate the filter
+                        output_row = True
+                        
+                        # build tags and fields for this row for filter evaluation
+                        if args.filter != '':
+                            tags, fields = getTagsFields(row)
+                            output_row = evalFilter(args.filter,tags,fields)
+                        
+                        if output_row is True:
+                            print ','.join(x for x in
+                            [strinquotes(row.get(x)) for x in header.split(',')
+                            if (x not in exclude and len(include) == 0) or x in include])
+                    # end for rw        
+                # end read table data
+                
+                # dms rest
+                else:
+                    if lastDMSResetTime is not None and time.time() - lastDMSResetTime < DMSRESET_MINTIME:
+                        write_warn("The time between two consecutive DMS resets is too short (%d seconds). Revise your configuration!"
+                            %(time.time() - lastDMSResetTime))
+
+                    # report where we are
+                    write_info("Resetting dms at '%s'"%args.dmsreset)                    
                     
-                    # only print fields and tags on the first row and exit
-                    if args.fieldstags:
-                        tags, fields = getTagsFields(row)
-                        print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
-                        print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
-                        raise SystemExit()                    
-                    
-                    # evaluate the filter
-                    output_row = True
-                    
-                    # build tags and fields for this row for filter evaluation
-                    if args.filter != '':
-                        tags, fields = getTagsFields(row)
-                        output_row = evalFilter(args.filter,tags,fields)
-                    
-                    if output_row is True:
-                        print ','.join(x for x in
-                        [strinquotes(row.get(x)) for x in header.split(',')
-                        if (x not in exclude and len(include) == 0) or x in include])
-                # end for rw        
+                    # dms reset operation call
+                    callDms(DMSREQUEST_RESET%(args.url,args.dmsreset,args.recurse))
+                    lastDMSResetTime=time.time()
+
                 
             except (ConnectionError, Timeout) as e:
                 write_error(str(e))
@@ -446,8 +536,12 @@ if __name__ == "__main__":
 
                 # check if time adjustment makes sense
                 if elapsed_s > delay_sec*0.75:
-                    write_warn("It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
-                        %(elapsed_s,args.table,delay_sec))
+                    if args.table is not None:
+                        msg="retrieve the DMS table '%s'"%args.table
+                    else:
+                        msg="reset DMS at '%s'"%args.dmsreset
+                    write_warn("It took %d seconds to %s which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!"
+                        %(elapsed_s,msg,delay_sec))
                     elapsed_s = 0
                 
                 # say what we are doing
@@ -458,17 +552,16 @@ if __name__ == "__main__":
                 sleep(delay_sec - elapsed_s)
             # delay to sleep
         ## end loop
-        
+    
+        closePipe(pipein)
+    
     except (KeyboardInterrupt, SystemExit):
-        write_info("Exiting...")
-        if pipein is not None:
-            os.close(pipein)
+        #write_info("Exiting...")
+        closePipe(pipein)
         pass
     except Exception as e:
-        if pipein is not None:
-            os.close(pipein)
-        write_error(str(e))
-        if args.verbose:
-            raise
+        closePipe(pipein)
+        #write_error(str(e))
+        raise
 
 # end main    

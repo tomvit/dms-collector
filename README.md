@@ -1,36 +1,61 @@
 # Weblogic DMS Metric Collector
 
 Weblogic DMS metric collector is a python utility that can be used to retrieve DMS metrics from Weblogic DMS Spy application. 
-It reads a specified metric table and converts its data to CSV format according to a number of options. 
+It reads a specified metric table data and converts them to CSV format. 
 
 DMS is Weblogic Dynamic Monitoring Service providing a massive amount of sensors about Weblogic and application components performance.
-It can be accessed in a number of ways, one being Weblogic Scripting Tool (wlst) or a DMS Spy application. DMS Spy is used to access DMS metric tables with a browser while DMS Spy endpoints also provide metric tables in XML format. ```dms-collector``` uses 
+It can be accessed in a number of ways, such as Weblogic Scripting Tool (wlst), Java API or DMS Spy application. DMS Spy is used to access DMS metric tables by using a browser while it also provides endpoints to retrieve metric tables in XML format. ```dms-collector``` uses 
 the endpoints to retrieve the desired information. It was originally developed as a probe for [Universal Metric Collector](https://github.com/rstyczynski/umc) but can be used independently of UMC.
 
 Run ```dms-collector --help``` to get more information on how to use it. 
 
 ```
-usage: dms-collector --count <num> --delay <seconds> --url <url>
-                     [--connect <u/p>] --table <tablename> [-h] [-V]
+usage: dms-collector --url <url> [--connect <u/p>] --count <num>
+                     (--delay <seconds>|-<minutes> | --runonevents <num>)
+                     (--table <tablename> | --dmsreset <path> | --recurse <value>)
+                     [--nodelayadjust] [--secsinmin <secs>] [--alignminutes]
+                     [--emitevents] [--maxtime <secs>] [--contacceptevents]
                      [--filter <python-expression>] [-ex <field1,field2,...>]
                      [-in <field1,field2,...>] [--noheader] [--origheader]
                      [--timeformat <format>] [--datetimefield <name>]
-                     [--timezonefield <name>] [--nostrinquotes]
-                     [--nodelayadjust] [--fieldstags] [--printheader]
-                     [--noversioncheck]
+                     [--timezonefield <name>] [--nostrinquotes] [--fieldstags]
+                     [--printheader] [-h] [-V] [--verbose] [--noversioncheck]
+                     [--namedpipe <path>]
 
 Weblogic DMS Spy table metric collector
 
-required arguments:
-  --count <num>         number of runs the data will be retrieved from DMS
-  --delay <seconds>     delay in seconds between runs
-  --url <url>           Weblogic admin server url where DMS Spy app us running
-  --connect <u/p>       username/password to login to DMS Spy
-  --table <tablename>   name of a valid DMS table which data to be retrieved
-
 optional arguments:
-  -h, --help            show this help message and exit
-  -V, --version         show program's version number and exit
+  --delay <seconds>|-<minutes>
+                        delay between runs; positive value is seconds,
+                        negative value is minutes
+  --runonevents <num>   run when <num> events occur
+  --table <tablename>   name of a valid DMS table which data to be retrieved
+  --dmsreset <path>     reset dms aggregated data for <path>
+  --recurse <value>     reset dms operation recurse parameter, default is
+                        'all'
+
+required arguments:
+  --url <url>           Weblogic admin server url where DMS Spy is running
+  --connect <u/p>       username/password to login to DMS Spy
+  --count <num>         number of runs the data will be retrieved from DMS
+
+optional arguments when --delay argument is used:
+  --nodelayadjust       disables delay time adjustment
+  --secsinmin <secs>    a second in a minute to run each iteration when delay
+                        value is negative
+  --alignminutes        when delay value is negative then align minutes to the
+                        first minute of an hour; this argument is only applied
+                        when delay minutes is 2 or greater
+  --emitevents          emits an event after each run
+
+optional arguments when --runonevents argument is used:
+  --maxtime <secs>      maximum time in seconds between the first and the last
+                        event before the iteration will be triggered, default
+                        is 20; set this to 0 to wait indefinitely.
+  --contacceptevents    accept events during the whole running timme; when not
+                        set, events will not be accepted during DMS callouts
+
+optional filtering arguments:
   --filter <python-expression>
                         a condition that has to hold true for a row to be
                         included in the output
@@ -39,6 +64,8 @@ optional arguments:
   -in <field1,field2,...>, --include <field1,field2,...>
                         list of header fiedls to be included in the output
                         (all fields are included by default)
+
+optional formatting arguments:
   --noheader            suppress header in the output
   --origheader          use original header in the output, no normalization
   --timeformat <format>
@@ -49,28 +76,36 @@ optional arguments:
   --timezonefield <name>
                         time zone header field name (default is 'timezone')
   --nostrinquotes       do not place string values in quotes
-  --nodelayadjust       disables delay time adjustment
   --fieldstags          print only header's fields and tags and exit
   --printheader         print the table header and exit
+
+optional other arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+  --verbose             output details to stderr
   --noversioncheck      do not check tbml version
+  --namedpipe <path>    location of a named pipe used to read and write events
 ```
+## Testing Server
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
 a simple http server running in nodejs that simulates DMS Spy endpoints for sample metric tables. 
-This server is available in the test directory of this repository. The server requires [nodejs](https://nodejs.org/en/) to be available in your system. 
+This server is available in ```test/local-server``` directory of this repository. The server requires [nodejs](https://nodejs.org/en/) to be available in your system. 
 
-In order to run the testing server, run the following command in the ```test/local-server``` directory:
+Run the following command in the ```test/local-server``` directory:
 
 ```
 node http-server.js 
 ```
 
-The server uses HTTP basic authentication (the same as DMS Spy app deployed on Weblogic version 10.3.6) with username ```weblogic``` and a password ```password1``` and is listening on tcp/7031 by default. You can use this server to run the below tests.
+The server uses HTTP basic authentication (the same as DMS Spy app deployed on Weblogic version 10.3.6) with username ```weblogic``` and a password ```password1``` and is listening on ```tcp/7031``` by default. 
 
-In order to retrieve all rows from a DMS metric table called ```JDBC_DataSources```, run the following command:
+## Basic Usage
+
+In order to retrieve all rows from a DMS metric table called ```JDBC_DataSources``` 10 times with a delay od 30 seconds between data retrievals, run the following command:
 
 ```
-dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource
+dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource
 ```
 This will provide the following output:
 
@@ -86,21 +121,24 @@ datetime,timezone,Host,ServerName,ConnectionCreate_maxTime,ConnectionCreate_comp
 18-08-02 20:01:03,+0200,server2.local,WLS_SOA2,32,1,32,WLS_SOA2:8061,0,1,EDNDataSource-rac0,32,1,32.0,1,/JDBC
 ```
  
-In order to exclude fields ```Process``` and ```Parent``` from the output, run the following command:
+If you want to further exclude certain fields from the output, such as ```Process``` and ```Parent```, run the following command:
 
 ```
-dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Process,Parent
+dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Process,Parent
 ```
 
-In order to include rows that match a certain server name, run the following command:
+If you want to only include rows that match a certain criteria, such as a server name, run the following command:
 
 ```
-dms-collector --count 1 --delay 1 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
+dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
 ```
+The ```--filter``` parameter accepts any valid python expression with variable names matching table's header names. You can use all header names regardless whether they are inluded or excluded from the output.   
 
-## Delay time adjustments
+## Delay Time
 
-You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time and the overall running time of ```dms-collector``` can be determined. The time adjustment is however disabled when the time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using ```--nodelayadjust```.  
+You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time so that the overall running time can be determined. The time adjustment is however disabled when time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using ```--nodelayadjust```.
+
+```dms-collector``` will by default fetch data from DMS at the time you started the command. If you need your data to be retrieved always at the same time in a minute, you can further use a negative value for ```--delay``` parameter which indicates waiting time in minutes and another parameter ```--secsinmin``` which defines a second in a minute when ```dms-collector``` should fetch the data. By default, ```dms-collector``` fetches the data in the first second of a minute. If the delay value in minutes is greated than ```2``` you can further say that you want to fetch the data in "aligned" minutes in the hour. For example, if your delay is 2 minutes and you start ```dms-collector``` at 9:31, the data will be fetched at 9:32, 9:34, 9:36, etc. and not in 9:31, 9:33, 9:35, etc. With these options you can make sure that the data will always be fetched at the same times.       
 
 ## Timestamp and Timezone
 

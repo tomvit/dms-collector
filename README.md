@@ -142,7 +142,7 @@ The ```--filter``` parameter accepts any valid python expression with variable n
 
 You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time so that the overall running time can be determined. The time adjustment is however disabled when time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using ```--nodelayadjust```.
 
-```dms-collector``` will by default fetch data from DMS at the time you started the command. If you need your data to be retrieved always at the same time in a minute, you can further use a negative value for ```--delay``` parameter which indicates waiting time in minutes and another parameter ```--secsinmin``` which defines a second in a minute when ```dms-collector``` should fetch the data. By default, ```dms-collector``` fetches the data in the first second of a minute. If the delay value in minutes is greated than ```2``` you can further say that you want to fetch the data in "aligned" minutes in the hour. For example, if your delay is ```2``` minutes and you start ```dms-collector``` at 9:31, the data will be fetched at ```9:32```, ```9:34```, ```9:36```, etc. and not in ```9:31```, ```9:33```, ```9:35```, etc. With these options you can make sure that the data will always be fetched at the same times.       
+```dms-collector``` will by default fetch data from DMS at the time you started the command. If you need your data to be retrieved always at the same time in a minute, you can further use a negative value for ```--delay``` parameter which indicates waiting time in minutes and another parameter ```--secsinmin``` which defines a second in a minute when ```dms-collector``` should fetch the data. By default, ```dms-collector``` fetches the data in the first second of a minute. If the delay value in minutes is greated than ```2``` you can further say that you want to fetch the data in "aligned" minutes in the hour. For example, if your delay is ```2``` minutes and you start ```dms-collector``` at ```9:31```, the data will be fetched at ```9:32```, ```9:34```, ```9:36```, etc. and not in ```9:31```, ```9:33```, ```9:35```, etc. With these options you can make sure that the data will always be fetched at the same times.       
 
 ## DMS Aggregated Data and DMS Reset
 
@@ -150,8 +150,7 @@ DMS provides a set of metrics for which it automatically calculates aggregated v
 
 ```dms-collector``` provides features which allow you to achieve the above requirement by ensuring that your metrics will always be collected at the same times of a minute and an hour, and a DMS reset will only be fired when all aggregated metrics that you collect will be retrieved. This can be achieved by two or more ```dms-collector``` instances sending and receiving events by using Linux named pipes. The below example illustrates such configuration.
 
-Say, you have two DMS aggregated metrics you need to collect, metric1 and metric2. You need to collect these metrics every ```5```
-minutes at the same time and only after both metrics are retrieved you need to reset DMS. 
+Say, you have two DMS aggregated metrics you need to collect, ```metric1``` and ```metric2```. You need to collect these metrics every ```5``` minutes at the same time and only after both metrics are retrieved you need to reset DMS. 
 
 You first run the two instnaces of ```dms-collector``` as follows.
 
@@ -160,14 +159,14 @@ dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --adminurl url 
 dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --adminurl url --connect u/p --table metric2 --emitevents
 ```
 
-Collection of data for metric1 and metric2 will happen in the 5th second of every 5th minute while the collection time will be aligned to this 5th minute of the hour. Both commands will further emit an event after each DMS data retrieval. So you need to reset DMS only when both DMS data will be retrieved. You can use the below command to achieve this.
+Collection of data for ```metric1``` and ```metric2``` will happen in the 5th second of every 5th minute while the collection time will be aligned to the 5th minute of the hour. Both commands will further emit an event after DMS data is retrieved and you only need to reset DMS when both tables will be retrieved. You can use the below command to achieve this.
 
 ```
 dms-collector --count 10 --runonevents 2 --dmsreset --adminurl url --connect u/p 
 ```
 
-The above command will wait for two events and only after it receives them, it will call DMS reset operation. If for some reason only one event will be received, for example metric2 will take more time to fetch, there is a default timeout of ```20``` seconds that indicates the maximum time to receive the last event since the first event was received. You can change this value by ```--maxtime``` parameter or disable this timeout by setting ```--maxtime``` to ```0```. Also, the above command will not accept any events while it is running DMS reset, which may take several seconds to finish. This may be important to achieve DMS reset is happening on regular time intervals. If you want to change this, you can allow to accept events by ```--contacceptevents``` parameter. 
-
+The above command will wait for two events and only after it receives them, it will call DMS reset operation. If for some reason only one event will be received, such as ```metric2``` will take more time to fetch, there is a default timeout of ```20``` seconds that indicates the maximum time to receive the last event since the first event was received. You can change this value by ```--maxtime``` parameter or disable this timeout by setting ```--maxtime``` to ```0```. Also, the above command will not accept any events while it is running DMS reset, which may take several seconds to finish. This may be important to achieve DMS reset is happening at the same time. If you want to change this, you can allow to accept events all the time by setting ```--contacceptevents``` parameter. Further, the named pipe that the ```dms-collector``` instances use to communicate events can be changed by ```--namedpipe``` parameter in case you need to change its location or want to separate sets of above configurations. 
+ 
 ## TODO
 
 The current version of ```dms-collector``` will most likely not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy

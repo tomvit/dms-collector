@@ -11,6 +11,7 @@ const mode = process.argv[3] || "";
 
 const username = "weblogic"
 const password = "password1"
+const DMSRESET_DURATION = 30000;
 
 function sendAuthenticate(req, res) {
   res.statusCode = 401;
@@ -43,6 +44,17 @@ http.createServer(function (req, res) {
   // parse URL
   var pathname = url.parse(req.url).pathname;
   var queryData = url.parse(req.url, true).query;
+  
+  if (queryData.operation == 'reset') {
+    console.log(`requested DMS reset, will wait ${DMSRESET_DURATION} milliseconds.`)
+    setTimeout(function () {
+      res.statusCode = 200;
+      res.setHeader('Content-type', 'text/plain' );
+      res.end("DMS operation called successfully.");
+      console.log(`DMS reset finished.`)      
+    }, DMSRESET_DURATION);
+    return;
+  }
   
   filename = __dirname  + "/../data/" + queryData.table + (queryData.description === "true" ? "_descr" : "_values") + ".xml";
   console.log(`requested file: ${filename}`)

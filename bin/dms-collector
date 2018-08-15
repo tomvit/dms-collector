@@ -8,9 +8,10 @@
 
 # todo: 
 # - reset DMS flag
-# - add verbose flag
 # - allow to join two or more tables on specific column name
 
+import os
+import signal
 import argparse
 import re
 import requests
@@ -18,6 +19,7 @@ import sys
 import time
 import datetime
 import xml.etree.ElementTree as ET
+import errno
 
 from time import sleep, strftime
 
@@ -30,6 +32,10 @@ TBML_VERSIONS=["11.0"]
 # timeout to read data from dms spy
 TIMEOUT_CONNECT=3.05
 TIMEOUT_READ=30
+
+# named pipe for event communication
+EVENTS_PIPENAME="/tmp/dms-collector-events"
+EVENTS_BUFFERSIZE=1024
 
 # input arguments
 args=None
@@ -79,6 +85,10 @@ def retrieveData(url):
                 %(tbml_version,','.join(TBML_VERSIONS)))
     return root
 
+# signal termination handler for graceful shutdown
+def signal_quit(signal, frame):
+    write_info("Exiting...")
+
 # evaluates if str is number (int or float)
 def isNumber(str):
     p = re.compile(r'^[\+\-]?[0-9]*(\.[0-9]+)?$')
@@ -116,25 +126,121 @@ def strinquotes(val):
         return val
     else:
         return "\"%s\""%val
+
+# emits an event using linux named pipe    
+def emitEvent(event):        
+    result = False
+    try:
+        pipeout = os.open(EVENTS_PIPENAME, os.O_WRONLY | os.O_NONBLOCK)
+        try:
+            os.write(pipeout, event + "\n"); 
+            result = True
+        finally:
+            os.close(pipeout)
+    except OSError as err:
+        if err.errno == errno.EAGAIN or err.errno == errno.EWOULDBLOCK or err.errno == errno.ENXIO:
+            pass
+        else:
+            write_error("Error when emitting event: %s"%str(err))
+    return result
+
+# read events from a named pipe separated by newline
+def readEvents(pipein,timeout):
+    if os.path.exists(EVENTS_PIPENAME):
+        buffer = ""
+        time_s=time.time()
+        while time.time()-time_s < timeout:
+            try:
+                buf = os.read(pipein, EVENTS_BUFFERSIZE)
+            except OSError as err:
+                buf = ""
+                if err.errno == errno.EAGAIN or err.errno == errno.EWOULDBLOCK:
+                    pass
+                else:
+                    write_error("Error when reading events from the pipe: %s"%str(err))
+            
+            buffer += buf
+            if len(buffer) > 0 and re.match(r'.+\n$',buffer):
+                return [x for x in buffer.split("\n") if len(x) > 0]
+            sleep(0.5)
+        # end while
+        
+        events=[x for x in buffer.split("\n") if len(x) > 0]
+        if len(events) > 0 and not(re.match(r'.+\n$',buffer)):   
+            write_error("An invalid event with no newline received within a timeout of %d seconds: %s"
+                %(events[len(events)-1],timeout))
+        return events
+    # if
+    return []
+# readEvents
+
+# wait for events to occur
+def waitForEvents(pipein):
+    try:
+        numEvents=0
+        time_s=0
+        while numEvents < args.runonevents and (time_s == 0 or time.time()-time_s < args.maxtime):
+            events = readEvents(pipein, 1)
+            if len(events)>0:
+                write_info("Events occured: [%s]"%";".join(events))
+            numEvents += len(events)
+
+            if numEvents == 0:
+                write_info("Waiting for the first event...")
+
+            # start time to calc the timeout between the first and last events
+            if numEvents > 0 and time_s == 0:
+                time_s = time.time()
+                write_info("%d event(s) occurred, there are %d remaining events that should occur within the next %d seconds."
+                    %(len(events),args.runonevents-len(events),args.maxtime))
+            
+            # sleep a bit
+            sleep(0.5)
+            
+        # show warning if not all events occurred
+        if numEvents < args.runonevents:
+            write_warn("Ended on timeout of %d seconds, %d event(s) occurred which is less than desired %d."
+                %(args.maxtime,numEvents,args.runonevents))
+        
+        # show warning if more events occurred than expected
+        if numEvents > args.runonevents:
+            write_warn("More events occured (%d) than expected (%d)."%(numEvents,args.runonevents))
+                
+        # success
+        return True
+    except Exception as e:
+        write_error("Error occurred when waiting for events: %s"%str(e))
+        raise      
+# waitForEvents
     
 # *** MAIN
-if __name__ == "__main__":    
+if __name__ == "__main__":   
+    pipein=None
+
     try:
         # arguments
         parser = argparse.ArgumentParser(description='Weblogic DMS Spy table metric collector', add_help=False)
         
         required = parser.add_argument_group('required arguments')
-        required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
-        required.add_argument('--delay', required=True, help='delay between runs; positive value is seconds, negative value is minutes',type=int, metavar='<seconds>|-<minutes>')
-        required.add_argument('--url', required=True, help='Weblogic admin server url where DMS Spy app us running',metavar='<url>')
+        required.add_argument('--url', required=True, help='Weblogic admin server url where DMS Spy is running',metavar='<url>')
         required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
+        required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
+
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('--delay', help='delay between runs; positive value is seconds, negative value is minutes',default=0,type=int, metavar='<seconds>|-<minutes>')
+        group.add_argument('--runonevents',help='run when <num> events occur',default=0,metavar='<num>',type=check_positive)
+
         required.add_argument('--table', required=True, help='name of a valid DMS table which data to be retrieved',metavar='<tablename>')    
 
-        ruopts = parser.add_argument_group('optional running arguments')
+        ruopts = parser.add_argument_group('optional arguments when --delay argument is used')
         ruopts.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
-        ruopts.add_argument('--secsinmin', required=False, help='a second in a minute to run each iteration when delay value is negative',default=0,type=int)
+        ruopts.add_argument('--secsinmin', required=False, help='a second in a minute to run each iteration when delay value is negative',default=0,type=int,metavar='<secs>')
         ruopts.add_argument('--alignminutes', required=False, help='when delay value is negative then align minutes to the first minute of an hour; this argument is only applied when delay minutes is 2 or greater',default=False,action='store_true')
-        
+        ruopts.add_argument('--emitevents', required=False, help='emits an event after each run',default=False,action='store_true')
+
+        reopts = parser.add_argument_group('optional arguments when --runonevents argument is used')
+        reopts.add_argument('--maxtime', required=False, help='maximum time in seconds between the first and the last event before the iteration will be triggered',default=20,type=int,metavar='<secs>')    
+
         fiopts = parser.add_argument_group('optional filtering arguments')
         fiopts.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    
         fiopts.add_argument("-ex",'--exclude', required=False, help='list of header fiedls to be excluded from the output',default='',metavar='<field1,field2,...>')    
@@ -158,6 +264,17 @@ if __name__ == "__main__":
                     
         args=parser.parse_args()
         
+        # register signals to quit the process
+        #for sig in ('TERM', 'HUP', 'INT'):
+        #    signal.signal(getattr(signal, 'SIG'+sig), signal_quit);
+        
+        # create the named pipe if it does not exist
+        if not os.path.exists(EVENTS_PIPENAME):
+            os.mkfifo(EVENTS_PIPENAME)  
+            
+        if args.runonevents > 0:
+            pipein = os.open(EVENTS_PIPENAME, os.O_RDONLY | os.O_NONBLOCK)
+                
         # args checks
         checkPattern(args.url, r"^(http:)//([A-Za-z0-9\-\.]+)(:[0-9]+)?$", 
             "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]\n"%args.url)
@@ -178,7 +295,8 @@ if __name__ == "__main__":
                 eval(args.filter)
             except Exception as e:
                 if re.match(r".*invalid syntax.*", str(e)):
-                    raise Exception("The filter '%s' is not a valid python expression (%s)!\n\n"%(args.filter,str(e)))
+                    raise Exception("The filter '%s' is not a valid python expression (%s)!\n\n"
+                        %(args.filter,str(e)))
         
         # diable header when printing fields and tags only
         if args.fieldstags:
@@ -207,13 +325,17 @@ if __name__ == "__main__":
                 if time_n < time_s:                
                     time_n=time_no+(int(time_no/60)%(args.delay*-1))*60
             
-            write_info("Sleeping for %d seconds, will wake up at %s."%(time_n-time_s,strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))))
-            
+            write_info("Sleeping for %d seconds, will wake up at %s."
+                %(time_n-time_s,strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_n))))        
             sleep(time_n-time_s)
-                                
+        
+        if args.runonevents > 0:
+            waitForEvents(pipein)
+                                    
         count = 0
         header = None        
         while (count < args.count):
+            error = False
             try:
                 # number of runs
                 count = count + 1
@@ -242,7 +364,7 @@ if __name__ == "__main__":
                         print header
                         # only print header and exit
                         if args.printheader:
-                            sys.exit(0)
+                            raise SystemExit()
                 # end header
             
                 # get dms table values
@@ -271,7 +393,7 @@ if __name__ == "__main__":
                         tags, fields = getTagsFields(row)
                         print "tags:", ','.join(k for k,v in tags.items() if k in header.split(','))
                         print "fields:", ','.join(k for k,v in fields.items() if k in header.split(','))
-                        sys.exit(0)                            
+                        raise SystemExit()                    
                     
                     # evaluate the filter
                     output_row = True
@@ -288,43 +410,65 @@ if __name__ == "__main__":
                 # end for rw        
                 
             except (ConnectionError, Timeout) as e:
-                sys.stderr.write("[" + str(datetime.datetime.now()) + "]: %s\n"%str(e))
+                write_error(str(e))
+                error = True
                 pass
-                                
-            # the time in seconds it took to retrieve the data
-            # disable it when explicitly disabled
-            if args.nodelayadjust:
-                elapsed_s = 0
-            else:
-                elapsed_s = time.time() - time_s
-                write_info("It took %d seconds to retrieve data, will adjust waiting time accordingly."%elapsed_s)
+                    
+            # emit event
+            if args.emitevents:
+                event="table: %s, success: %s, pid: %s, time: %s"%(args.table,not(error),os.getpid(),time.time())
+                if emitEvent(event):
+                    write_info("Event emitted: %s"%event)
+                else:
+                    # this is not an error as the event won't be emitted when 
+                    # no process is reading from the pipe
+                    write_info("Event not emitted: %s"%event)
+                    
+            if args.runonevents > 0:
+                waitForEvents(pipein)
+            
+            else:      
+                # use delay to sleep                           
+                # the time in seconds it took to retrieve the data
+                # disable it when explicitly disabled
+                if args.nodelayadjust:
+                    elapsed_s = 0
+                else:
+                    elapsed_s = time.time() - time_s
+                    write_info("It took %d seconds to retrieve data, will adjust waiting time accordingly."%elapsed_s)
 
-            # calculate delay
-            if args.delay < 0:
-                n=int(time_s/60)*60 + args.delay*-60 + args.secsinmin
-                delay_sec=n-time_s
-            else:
-                delay_sec = args.delay
+                # calculate delay
+                if args.delay < 0:
+                    n=int(time_s/60)*60 + args.delay*-60 + args.secsinmin
+                    delay_sec=n-time_s
+                else:
+                    delay_sec = args.delay
 
-            # check if time adjustment makes sense
-            if elapsed_s > delay_sec*0.75:
-                write_warn("It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
-                    %(elapsed_s,args.table,delay_sec))
-                elapsed_s = 0
-            
-            # say what we are doing
-            write_info("Sleeping for %d seconds, will wake up at %s"
-                %(delay_sec - elapsed_s, strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()+delay_sec-elapsed_s))))
-            
-            # adjust the delay time and sleep
-            sleep(delay_sec - elapsed_s)
-            
+                # check if time adjustment makes sense
+                if elapsed_s > delay_sec*0.75:
+                    write_warn("It took %d seconds to retrieve the DMS table '%s' which is more than 2/3 of the delay (%d seconds). The time will not be adjusted which in turn will cause the dms collector to run more time!\n"
+                        %(elapsed_s,args.table,delay_sec))
+                    elapsed_s = 0
+                
+                # say what we are doing
+                write_info("Sleeping for %d seconds, will wake up at %s"
+                    %(delay_sec - elapsed_s, strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()+delay_sec-elapsed_s))))
+                
+                # adjust the delay time and sleep
+                sleep(delay_sec - elapsed_s)
+            # delay to sleep
         ## end loop
         
     except (KeyboardInterrupt, SystemExit):
+        write_info("Exiting...")
+        if pipein is not None:
+            os.close(pipein)
         pass
     except Exception as e:
-        sys.stderr.write("[" + str(datetime.datetime.now()) + "]: %s\n"%str(e))
-        raise
+        if pipein is not None:
+            os.close(pipein)
+        write_error(str(e))
+        if args.verbose:
+            raise
 
 # end main    

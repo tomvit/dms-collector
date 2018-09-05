@@ -437,7 +437,9 @@ if __name__ == "__main__":
 
                         # print header
                         if not(args.noheader) or args.printheader:
-                            print header
+                            sys.stdout.write(header + "\n")
+                            sys.stdout.flush()
+                            
                             # only print header and exit
                             if args.printheader:
                                 raise SystemExit()
@@ -449,8 +451,14 @@ if __name__ == "__main__":
                     # get dms table values
                     root = retrieveData(DMSREQUEST_DATA%(args.url,args.table))
                     
+                    # row counters
+                    row_count = 0
+                    row_count_out = 0
+                    
                     # iterate over all rows in the table
                     for rw in root.findall(".//row"):
+                        row_count = row_count + 1
+                        
                         row={}
                         row[args.datetimefield] = stime
                         row[args.timezonefield] = tzone
@@ -483,12 +491,22 @@ if __name__ == "__main__":
                             output_row = evalFilter(args.filter,tags,fields)
                         
                         if output_row is True:
-                            print ','.join(x for x in
+                            r = ','.join(x for x in
                             [strinquotes(row.get(x)) for x in header.split(',')
                             if (x not in exclude and len(include) == 0) or x in include])
-                    # end for rw        
+                            
+                            if len(r) > 0:
+                                row_count_out = row_count_out + 1
+                                sys.stdout.write(res + "\n")
+                                sys.stdout.flush()
+                                
+                    # end for rw
+                    
+                    # report where we are
+                    write_info("There were %d rows retrieved and %d rows writen out."%(row_count,row_count_out))
+                            
                 # end read table data
-                
+                                
                 # dms rest
                 else:
                     if lastDMSResetTime is not None and time.time() - lastDMSResetTime < DMSRESET_MINTIME:

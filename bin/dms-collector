@@ -497,7 +497,7 @@ if __name__ == "__main__":
                             
                             if len(r) > 0:
                                 row_count_out = row_count_out + 1
-                                sys.stdout.write(res + "\n")
+                                sys.stdout.write(r + "\n")
                                 sys.stdout.flush()
                                 
                     # end for rw

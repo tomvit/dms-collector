@@ -38,7 +38,7 @@ DMSREQUEST_RESET="%s/dms/Spy?operation=reset&format=raw&cache=refreshall&name=%s
 TIMEOUT_CONNECT=3.05
 TIMEOUT_READ=30
 
-# time between two consecutive dms rests
+# time between two consecutive dms resets
 # a warning will only be generated when this time will be exceeded
 DMSRESET_MINTIME=20
 
@@ -545,7 +545,7 @@ if __name__ == "__main__":
             if args.runonevents > 0:
                 waitForEvents(pipein)
             
-            else:      
+            elif count < args.count: # do not wait in the last iteration   
                 # use delay to sleep                           
                 # the time in seconds it took to retrieve the data
                 # disable it when explicitly disabled

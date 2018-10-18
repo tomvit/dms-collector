@@ -167,6 +167,10 @@ dms-collector --count 10 --runonevents 2 --dmsreset --adminurl url --connect u/p
 
 The above instance will wait for two events sent from the two earlier instances by communicating over a default named pipe ```/tmp/dms-collector-events```. Only after the two events are received, it will call DMS reset operation. If for some reason only one event will be received, such as ```metric2``` will take more time to fetch, there is a default timeout of ```20``` seconds that indicates the maximum time to receive the last event since the first event was received. You can change this value by ```--maxtime``` parameter or disable this timeout by setting ```--maxtime``` to ```0```. The above ```dms-collector``` instance will not accept any events while it is running DMS reset, which in some environments may take several minutes. If you want to change this, you can allow to accept events at any time by setting ```--contacceptevents``` parameter. The default named pipe location can be changed by ```--namedpipe``` parameter, for example, when you need to have the same setup for multiple domains on the same host. 
  
+## Login
+ 
+```dms-collector``` attempts to login by using HTTP basic authentication by default which is required by earlier versions of DMS Spy app. If you are collecting data from a DMS Spy app of later version that requires HTML form authentication, you will need to use ```--loginform``` parameter.  
+ 
 ## TODO
 
 The current version of ```dms-collector``` will most likely not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy

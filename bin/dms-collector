@@ -647,7 +647,7 @@ if __name__ == "__main__":
         pass
     except Exception as e:
         closePipe(pipein)
-        #write_error(str(e))
-        raise
+        write_error(str(e))
+        #raise
 
 # end main    

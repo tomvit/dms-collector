@@ -33,6 +33,7 @@ TBML_VERSIONS=["11.0"]
 DMSREQUEST_HEADER="%s/dms/Spy?format=xml&table=%s&description=true&value=false"
 DMSREQUEST_DATA="%s/dms/Spy?format=xml&table=%s&value=true&cached=false"
 DMSREQUEST_RESET="%s/dms/Spy?operation=reset&format=raw&cache=refreshall&name=%s&recurse=%s"
+DMSLOGIN_URL="%s/dms/j_security_check"
 
 # timeout to read data from dms spy
 TIMEOUT_CONNECT=3.05
@@ -53,6 +54,7 @@ EVENTS_BUFFERSIZE=1024
 args=None
 username=None
 password=None
+logincookie=None # cookie used for login using login form 
 
 # messages colors
 class bcolors:
@@ -103,15 +105,70 @@ def checkPattern(str, pattern, errormsg):
     if not p.match(str):
         raise Exception(errormsg)
 
+# login to Dms by using login form
+def DmsLogin():
+    headers   = { "User-Agent" : "dms-collector/1.0" }
+    logindata = {"j_username" : username, "j_password" : password, "j_character_encoding" : "UTF-8" }
+    r = requests.request("POST",DMSLOGIN_URL%(args.url),headers=headers,data=logindata,allow_redirects=False)
+    if r.status_code==302:
+        loc=r.headers["Location"] if r.headers.get("Location") is not None else None
+        cookie=r.headers["Set-Cookie"] if r.headers.get("Set-Cookie") is not None else None
+        if loc is not None and cookie is not None:
+            if not("loginForm" in loc):
+                # success login
+                return cookie
+        # // if all headers present
+    # // if redirection
+    
+    # failed login
+    return None
+# // DmsLogin
+
 # calling dms at url specified 
 def callDms(url):
+    global logincookie    
     write_info("Calling DMS at %s."%url)
-    if username is None:
-        r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout))
+    r=None
+    if not(args.loginform):
+        if username is None:
+            r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout),allow_redirects=False)
+        else:
+            r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, args.readtimeout),allow_redirects=False)
+        if r.status_code==302:
+            raise Exception("It seems that DMS Spy requires login form authentication!")        
+        r.raise_for_status()
     else:
-        r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, args.readtimeout))        
-    r.raise_for_status()
+        # loginform is set
+        logincalled=False
+        if logincookie is None:
+            logincookie=DmsLogin()
+            logincalled=True
+        # // login to Dms
+        
+        if logincookie is not None:
+            while True:
+                r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout),headers={"Cookie" : logincookie},allow_redirects=False)
+                if r.status_code!=200 and not(logincalled):
+                    # try to login if cookied expired
+                    logincookie=DmsLogin()
+                    logincalled=True
+                    if logincookie is None:
+                        break
+                else:
+                    break
+                # // if failure
+            # // while
+                
+            if r.status_code!=200:
+                logincookie=None
+        # // logincookie 
+        
+        if logincookie is None:
+            raise Exception("DMS request failed, possibly due to a failed login!")
+    # // login form
+    
     return r
+# // callDms
 
 # retrieves data using HTTP get
 def retrieveData(url):
@@ -281,7 +338,7 @@ if __name__ == "__main__":
         
         required = parser.add_argument_group('required arguments')
         required.add_argument('--url', required=True, help='Weblogic admin server url where DMS Spy is running',metavar='<url>')
-        required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')
+        required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')        
         required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
 
         group1 = parser.add_mutually_exclusive_group(required=True)
@@ -324,7 +381,8 @@ if __name__ == "__main__":
         otopts.add_argument('--verbose', required=False, help='output details to stderr',default=False,action='store_true')
         otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
         otopts.add_argument('--namedpipe', required=False, help='location of a named pipe used to read and write events',default=EVENTS_PIPENAME,metavar='<path>')    
-        otopts.add_argument('--readtimeout', required=False, help='htto read timeout, default is %s seconds'%TIMEOUT_READ,type=float,default=TIMEOUT_READ,metavar='<secs>')    
+        otopts.add_argument('--readtimeout', required=False, help='htto read timeout, default is %s seconds'%TIMEOUT_READ,type=float,default=TIMEOUT_READ,metavar='<secs>')   
+        otopts.add_argument('--loginform', required=False, action='store_true',default=False, help='use login form instead of HTTP basic auth. This is required for newever versions of DMS Spy') 
                     
         args=parser.parse_args()
         

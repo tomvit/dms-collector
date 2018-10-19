@@ -135,7 +135,7 @@ def callDms(url):
         else:
             r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, args.readtimeout),allow_redirects=False)
         if r.status_code==302:
-            raise Exception("It seems that DMS Spy requires login form authentication!")        
+            raise Exception("It seems that DMS Spy requires login form authentication, try to use --loginform option.")        
         r.raise_for_status()
     else:
         # loginform is set
@@ -147,9 +147,9 @@ def callDms(url):
         
         if logincookie is not None:
             while True:
-                r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout),headers={"Cookie" : logincookie},allow_redirects=False)
+                r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout), headers={ "Cookie" : logincookie }, allow_redirects=False)
                 if r.status_code!=200 and not(logincalled):
-                    # try to login if cookied expired
+                    # try to login if cookie expired
                     logincookie=DmsLogin()
                     logincalled=True
                     if logincookie is None:

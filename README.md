@@ -20,7 +20,7 @@ usage: dms-collector --url <url> [--connect <u/p>] --count <num>
                      [--timeformat <format>] [--datetimefield <name>]
                      [--timezonefield <name>] [--nostrinquotes] [--fieldstags]
                      [--printheader] [-h] [-V] [--verbose] [--noversioncheck]
-                     [--namedpipe <path>]
+                     [--namedpipe <path>] [--readtimeout <secs>] [--loginform]
 
 Weblogic DMS Spy table metric collector
 
@@ -85,7 +85,11 @@ optional other arguments:
   --verbose             output details to stderr
   --noversioncheck      do not check tbml version
   --namedpipe <path>    location of a named pipe used to read and write events
+  --readtimeout <secs>  htto read timeout, default is 30 seconds
+  --loginform           use login form instead of HTTP basic auth. This is
+                        required for newever versions of DMS Spy
 ```
+
 ## Testing Server
 
 In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
@@ -169,13 +173,8 @@ The above instance will wait for two events sent from the two earlier instances 
  
 ## Login
  
-```dms-collector``` attempts to login by using HTTP basic authentication by default which is required by earlier versions of DMS Spy app. If you are collecting data from a DMS Spy app of later version that requires HTML form authentication, you will need to use ```--loginform``` parameter.  
+```dms-collector``` attempts to login by using HTTP basic authentication by default which is required by earlier versions of DMS Spy. If you are collecting data from a DMS Spy of a later version, you need to use ```--loginform``` option which uses a login form and a session cookie to associate DMS requests with a session in DMS Spy. ```dms-collector``` sends only one login request and reuses session cookie for all subsequent requests.
  
-## TODO
-
-The current version of ```dms-collector``` will most likely not work on recent versions of Weblogic or SOA 11.1.1.7+. The DMS Spy
-of such versions uses HTML form authentication instead of HTTP basic authentication. 
-
 # License
 
 free and free as a bird

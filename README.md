@@ -106,10 +106,10 @@ The server uses HTTP basic authentication (the same as DMS Spy app deployed on W
 
 ## Basic Usage
 
-In order to retrieve all rows from a DMS metric table called ```JDBC_DataSources``` 10 times with a delay od 30 seconds between data retrievals, run the following command:
+In order to retrieve all rows from a DMS metric table called ```JDBC_DataSources``` 10 times with a delay of 30 seconds between data retrievals, run the following command:
 
 ```
-dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource
+dms-collector --count 10 --delay 30 --url http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource
 ```
 This will provide the following output:
 

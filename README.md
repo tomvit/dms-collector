@@ -128,13 +128,13 @@ datetime,timezone,Host,ServerName,ConnectionCreate_maxTime,ConnectionCreate_comp
 If you want to further exclude certain fields from the output, such as ```Process``` and ```Parent```, run the following command:
 
 ```
-dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Process,Parent
+dms-collector --count 10 --delay 30 --url http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Process,Parent
 ```
 
 If you want to only include rows that match a certain criteria, such as a server name, run the following command:
 
 ```
-dms-collector --count 10 --delay 30 --adminurl http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
+dms-collector --count 10 --delay 30 --url http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
 ```
 The ```--filter``` parameter accepts any valid python expression with variable names matching table's header names. You can use all header names regardless whether they are inluded or excluded from the output.   
 
@@ -159,8 +159,8 @@ Say, you have two DMS aggregated metrics you need to collect, ```metric1``` and 
 You first run the two instnaces of ```dms-collector``` as follows.
 
 ```
-dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --adminurl url --connect u/p --table metric1 --emitevents
-dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --adminurl url --connect u/p --table metric2 --emitevents
+dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --url url --connect u/p --table metric1 --emitevents
+dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --url url --connect u/p --table metric2 --emitevents
 ```
 
 Collection of data for ```metric1``` and ```metric2``` will happen in the 5th second of every 5th minute while the collection time will be aligned to the 5th minute of the hour. Both commands will further emit an event after DMS data is retrieved and you only need to reset DMS when both tables will be retrieved. You can use the below command to achieve this.

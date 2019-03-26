@@ -110,7 +110,7 @@ def DmsLogin():
     headers   = { "User-Agent" : "dms-collector/1.0" }
     logindata = {"j_username" : username, "j_password" : password, "j_character_encoding" : "UTF-8" }
     r = requests.request("POST",DMSLOGIN_URL%(args.url),headers=headers,data=logindata,allow_redirects=False)
-    if r.status_code==302:
+    if r.status_code==302 or r.status_code==303:
         loc=r.headers["Location"] if r.headers.get("Location") is not None else None
         cookie=r.headers["Set-Cookie"] if r.headers.get("Set-Cookie") is not None else None
         if loc is not None and cookie is not None:
@@ -126,7 +126,7 @@ def DmsLogin():
 
 # calling dms at url specified 
 def callDms(url):
-    global logincookie    
+    global logincookie
     write_info("Calling DMS at %s."%url)
     r=None
     if not(args.loginform):
@@ -134,8 +134,8 @@ def callDms(url):
             r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout),allow_redirects=False)
         else:
             r = requests.get(url, auth=(username, password),timeout=(TIMEOUT_CONNECT, args.readtimeout),allow_redirects=False)
-        if r.status_code==302:
-            raise Exception("It seems that DMS Spy requires login form authentication, try to use --loginform option.")        
+        if r.status_code==302 or r.status_code==303:
+            raise Exception("It seems that DMS Spy requires login form authentication!")        
         r.raise_for_status()
     else:
         # loginform is set
@@ -147,9 +147,9 @@ def callDms(url):
         
         if logincookie is not None:
             while True:
-                r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout), headers={ "Cookie" : logincookie }, allow_redirects=False)
+                r = requests.get(url,timeout=(TIMEOUT_CONNECT, args.readtimeout),headers={"Cookie" : logincookie },allow_redirects=False)
                 if r.status_code!=200 and not(logincalled):
-                    # try to login if cookie expired
+                    # try to login if cookied expired
                     logincookie=DmsLogin()
                     logincalled=True
                     if logincookie is None:
@@ -173,7 +173,13 @@ def callDms(url):
 # retrieves data using HTTP get
 def retrieveData(url):
     r = callDms(url)
-    root = ET.fromstring(r.text)   
+
+    # remove the default namespace if it exsits
+    # dmss spy deployed to wls 12c uses default namespaces in TBML whereas previous version not
+    xmlstring=r.text
+    xmlstring = re.sub(r'\sxmlns="[^"]+"', '', xmlstring, count=1)
+    
+    root = ET.fromstring(xmlstring)   
     if not(args.noversioncheck): 
         tbml_version = root.get("version")
         if tbml_version not in TBML_VERSIONS:
@@ -382,7 +388,7 @@ if __name__ == "__main__":
         otopts.add_argument('--noversioncheck', required=False, help='do not check tbml version',default=False,action='store_true')
         otopts.add_argument('--namedpipe', required=False, help='location of a named pipe used to read and write events',default=EVENTS_PIPENAME,metavar='<path>')    
         otopts.add_argument('--readtimeout', required=False, help='htto read timeout, default is %s seconds'%TIMEOUT_READ,type=float,default=TIMEOUT_READ,metavar='<secs>')   
-        otopts.add_argument('--loginform', required=False, action='store_true',default=False, help='use login form instead of HTTP basic auth. This is required for newever versions of DMS Spy') 
+        otopts.add_argument('--loginform', required=False, default=False,action='store_true',help='use login form instead of HTTP basic auth. This is required for newever versions of DMS Spy') 
                     
         args=parser.parse_args()
         
@@ -512,7 +518,9 @@ if __name__ == "__main__":
                     # row counters
                     row_count = 0
                     row_count_out = 0
-                    
+                   
+                    print len(root.findall(".//row"))
+ 
                     # iterate over all rows in the table
                     for rw in root.findall(".//row"):
                         row_count = row_count + 1
@@ -647,7 +655,8 @@ if __name__ == "__main__":
         pass
     except Exception as e:
         closePipe(pipein)
-        write_error(str(e))
-        #raise
+        #write_error(str(e))
+        raise
 
 # end main    
+

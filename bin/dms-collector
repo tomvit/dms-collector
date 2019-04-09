@@ -215,7 +215,7 @@ def evalFilter(filter, tags, fields):
 
 # gets tags and fields from the row
 def getTagsFields(row): 
-    tags   = { k:str(v)   for k, v in row.items() if not(isNumber(v)) }
+    tags   = { k:str(v).replace('\n', ' ') for k, v in row.items() if not(isNumber(v)) }
     fields = { k:float(v) for k, v in row.items() if isNumber(v) }                            
     return tags, fields
     

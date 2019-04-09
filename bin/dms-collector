@@ -519,8 +519,6 @@ if __name__ == "__main__":
                     row_count = 0
                     row_count_out = 0
                    
-                    print len(root.findall(".//row"))
- 
                     # iterate over all rows in the table
                     for rw in root.findall(".//row"):
                         row_count = row_count + 1

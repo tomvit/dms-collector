@@ -107,7 +107,7 @@ def checkPattern(str, pattern, errormsg):
 
 # login to Dms by using login form
 def DmsLogin():
-    headers   = { "User-Agent" : "dms-collector/1.0" }
+    headers   = { "User-Agent" : "dms-collector/%s"%VERSION }
     logindata = {"j_username" : username, "j_password" : password, "j_character_encoding" : "UTF-8" }
     r = requests.request("POST",DMSLOGIN_URL%(args.url),headers=headers,data=logindata,allow_redirects=False)
     if r.status_code==302 or r.status_code==303:

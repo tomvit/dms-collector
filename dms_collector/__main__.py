@@ -35,13 +35,11 @@ required.add_argument('--url', required=True, help='Weblogic admin server url wh
 required.add_argument('--connect', required=False, help='username/password to login to DMS Spy',metavar='<u/p>')        
 required.add_argument('--count', required=True, help='number of runs the data will be retrieved from DMS',metavar='<num>',type=check_positive)
 required.add_argument('--delay', help='delay between runs',default=0,type=int, metavar='<seconds>')
+required.add_argument('--table', help='name of a valid DMS table which data to be retrieved',default=None,metavar='<tablename>')    
 
 group1 = parser.add_argument_group('optional delay adjustments arguments')
 group1.add_argument('--nodelayadjust', required=False, help='disables delay time adjustment',default=False,action='store_true')    
 group1.add_argument('--nodelayperc', metavar='<perc>', default=0.7, type=check_perc, required=False, help='when response time is more than this percantage of elapsed time then the delay will be disabled')    
-
-group2 = parser.add_mutually_exclusive_group(required=True)
-group2.add_argument('--table', help='name of a valid DMS table which data to be retrieved',default=None,metavar='<tablename>')    
 
 fiopts = parser.add_argument_group('optional filtering arguments')
 fiopts.add_argument('--filter', required=False, help='a condition that has to hold true for a row to be included in the output',default='',metavar='<python-expression>')    

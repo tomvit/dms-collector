@@ -4,105 +4,57 @@ Weblogic DMS metric collector is a python utility that can be used to retrieve D
 It reads a specified metric table data and converts them to CSV format. 
 
 DMS is Weblogic Dynamic Monitoring Service providing a massive amount of sensors about Weblogic and application components performance.
-It can be accessed in a number of ways, such as Weblogic Scripting Tool (wlst), Java API or DMS Spy application. DMS Spy is used to access DMS metric tables by using a browser while it also provides endpoints to retrieve metric tables in XML format. ```dms-collector``` uses 
-the endpoints to retrieve the desired information. It was originally developed as a probe for [Universal Metric Collector](https://github.com/rstyczynski/umc) but can be used independently of UMC.
+It can be accessed in a number of ways, such as Weblogic Scripting Tool (wlst), Java API or DMS Spy application. DMS Spy is used to access DMS metric tables by using a browser while it also provides endpoints to retrieve metric tables in XML format. ```dms-collector``` uses the endpoints to retrieve the desired information.
 
 Run ```dms-collector --help``` to get more information on how to use it. 
 
 ```
-usage: dms-collector --url <url> [--connect <u/p>] --count <num>
-                     (--delay <seconds>|-<minutes> | --runonevents <num>)
-                     (--table <tablename> | --dmsreset <path> | --recurse <value>)
-                     [--nodelayadjust] [--secsinmin <secs>] [--alignminutes]
-                     [--emitevents] [--maxtime <secs>] [--contacceptevents]
-                     [--filter <python-expression>] [-ex <field1,field2,...>]
-                     [-in <field1,field2,...>] [--noheader] [--origheader]
-                     [--timeformat <format>] [--datetimefield <name>]
-                     [--timezonefield <name>] [--nostrinquotes] [--fieldstags]
-                     [--printheader] [-h] [-V] [--verbose] [--noversioncheck]
-                     [--namedpipe <path>] [--readtimeout <secs>] [--loginform]
+usage: dms-collector --url <url> [--connect <u/p>] --count <num> [--delay <seconds>] [--table <tablename>] [--nodelayadjust] [--nodelayperc <perc>]
+                   [--filter <python-expression>] [-ex <field1,field2,...>] [-in <field1,field2,...>] [--csvdelimiter <char>] [--noheader]
+                   [--origheader] [--timeformat <format>] [--datetimefield <name>] [--timezonefield <name>] [--nostrinquotes] [-h] [-V]
+                   [--noversioncheck] [--readtimeout <secs>] [--basicauth]
 
 Weblogic DMS Spy table metric collector
-
-optional arguments:
-  --delay <seconds>|-<minutes>
-                        delay between runs; positive value is seconds,
-                        negative value is minutes
-  --runonevents <num>   run when <num> events occur
-  --table <tablename>   name of a valid DMS table which data to be retrieved
-  --dmsreset <path>     reset dms aggregated data for <path>
-  --recurse <value>     reset dms operation recurse parameter, default is
-                        'all'
 
 required arguments:
   --url <url>           Weblogic admin server url where DMS Spy is running
   --connect <u/p>       username/password to login to DMS Spy
   --count <num>         number of runs the data will be retrieved from DMS
+  --delay <seconds>     delay between runs
+  --table <tablename>   name of a valid DMS table which data to be retrieved
 
-optional arguments when --delay argument is used:
+optional delay adjustments arguments:
   --nodelayadjust       disables delay time adjustment
-  --secsinmin <secs>    a second in a minute to run each iteration when delay
-                        value is negative
-  --alignminutes        when delay value is negative then align minutes to the
-                        first minute of an hour; this argument is only applied
-                        when delay minutes is 2 or greater
-  --emitevents          emits an event after each run
-
-optional arguments when --runonevents argument is used:
-  --maxtime <secs>      maximum time in seconds between the first and the last
-                        event before the iteration will be triggered, default
-                        is 20; set this to 0 to wait indefinitely.
-  --contacceptevents    accept events during the whole running timme; when not
-                        set, events will not be accepted during DMS callouts
+  --nodelayperc <perc>  when response time is more than this percantage of elapsed time then the delay will be disabled
 
 optional filtering arguments:
   --filter <python-expression>
-                        a condition that has to hold true for a row to be
-                        included in the output
+                        a condition that has to hold true for a row to be included in the output
   -ex <field1,field2,...>, --exclude <field1,field2,...>
                         list of header fiedls to be excluded from the output
   -in <field1,field2,...>, --include <field1,field2,...>
-                        list of header fiedls to be included in the output
-                        (all fields are included by default)
+                        list of header fiedls to be included in the output (all fields are included by default)
 
 optional formatting arguments:
+  --csvdelimiter <char>
+                        CSV delimiter
   --noheader            suppress header in the output
   --origheader          use original header in the output, no normalization
   --timeformat <format>
-                        Python time format for datetime field (default is
-                        '%y-%m-%d %H:%M:%S')
+                        Python time format for datetime field (default is '%y-%m-%d %H:%M:%S')
   --datetimefield <name>
                         datetime header field name (default is 'datetime')
   --timezonefield <name>
                         time zone header field name (default is 'timezone')
   --nostrinquotes       do not place string values in quotes
-  --fieldstags          print only header's fields and tags and exit
-  --printheader         print the table header and exit
 
 optional other arguments:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
-  --verbose             output details to stderr
   --noversioncheck      do not check tbml version
-  --namedpipe <path>    location of a named pipe used to read and write events
   --readtimeout <secs>  htto read timeout, default is 30 seconds
-  --loginform           use login form instead of HTTP basic auth. This is
-                        required for newever versions of DMS Spy
+  --basicauth           use basic authentication instead of form login. This is required for earlier versions of DMS SPy.
 ```
-
-## Testing Server
-
-In order to test ```dms-collector``` when you do not have an access to a running Weblogic server, you can use
-a simple http server running in nodejs that simulates DMS Spy endpoints for sample metric tables. 
-This server is available in ```test/local-server``` directory of this repository. The server requires [nodejs](https://nodejs.org/en/) to be available in your system. 
-
-Run the following command in the ```test/local-server``` directory:
-
-```
-node http-server.js 
-```
-
-The server uses HTTP basic authentication (the same as DMS Spy app deployed on Weblogic version 10.3.6) with username ```weblogic``` and a password ```password1``` and is listening on ```tcp/7031``` by default. 
 
 ## Basic Usage
 
@@ -136,44 +88,29 @@ If you want to only include rows that match a certain criteria, such as a server
 ```
 dms-collector --count 10 --delay 30 --url http://localhost:7031 --connect weblogic/password1 --table JDBC_DataSource --exclude Parent,Process --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"```
 ```
-The ```--filter``` parameter accepts any valid python expression with variable names matching table's header names. You can use all header names regardless whether they are inluded or excluded from the output.   
+The `--filter` parameter accepts any valid python expression with variable names matching table's header names. You can use all header names regardless whether they are inluded or excluded from the output.   
 
 ## Timestamp and Timezone
 
-```dms-collector``` adds two columns to the CSV output, namely datetime and timezone. This is the current local time when the data is retrieved from DMS and changes with every iteration. You can change the field names for both columns by using ```--datetimefield``` and ```--timezonefield``` respectively as well as remove them from the output by using ```--exclude``` option.    
+`dms-collector` adds two columns to the CSV output, namely datetime and timezone. This is the current local time when the data is retrieved from DMS and changes with every iteration. You can change the field names for both columns by using `--datetimefield` and `--timezonefield` respectively as well as remove them from the output by using `--exclude` option.    
 
 ## Delay Time
 
-You can specify number of seconds ```dms-collector``` should wait between iterations by using ```--delay``` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that ```dms-collector``` always retrieves the data at the same time so that the overall running time can be determined. The time adjustment is however disabled when time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using ```--nodelayadjust```.
+You can specify number of seconds `dms-collector` should wait between iterations by using `--delay` parameter. Since reading the data may in some situations take more time to finish, the delay time needs to be adjusted so that `dms-collector` always retrieves the data at the same time so that the overall running time can be determined. The time adjustment is however disabled when time to retrieve the DMS data takes more than 2/3 of the delay time. You can disable the delay time adjustment by using `--nodelayadjust`.
 
-```dms-collector``` will by default fetch data from DMS at the time you started the command. If you need your data to be retrieved always at the same time in a minute, you can further use a negative value for ```--delay``` parameter which indicates waiting time in minutes and another parameter ```--secsinmin``` which defines a second in a minute when ```dms-collector``` should fetch the data. By default, ```dms-collector``` fetches the data in the first second of a minute. If the delay value in minutes is greated than ```2``` you can further say that you want to fetch the data in "aligned" minutes in the hour. For example, if your delay is ```2``` minutes and you start ```dms-collector``` at ```9:31```, the data will be fetched at ```9:32```, ```9:34```, ```9:36```, etc. and not in ```9:31```, ```9:33```, ```9:35```, etc. With these options you can make sure that the data will always be fetched at the same times.       
-
-## DMS Aggregated Data and DMS Reset
-
-DMS provides a set of metrics for which it automatically calculates aggregated values. For example, DMS table ```oracle_soa_composite:soainfra_binding_rollup```, provides aggregated data for running time averages, error rates, etc. DMS always calculates the values since the last DMS reset. That said, if you need to collect such aggregated values on regular time intervals, you need to reset DMS at the beginning of each interval. This may however become more complicated when you want to collect aggregated data from multiple DMS tables while DMS reset applies to all tables. In such a case, you have to make sure that you first collect all metrics and only after all metrics are retrieved you can reset DMS. Such metrics should be obviously collected in the same time intervals. 
-
-```dms-collector``` provides features which allow you to achieve the above requirement by ensuring that your metrics will always be collected at the same times of a minute and an hour, and a DMS reset will only be fired when all aggregated metrics that you collect will be retrieved. This can be achieved by two or more ```dms-collector``` instances sending and receiving events by using Linux named pipes. The below example illustrates such configuration.
-
-Say, you have two DMS aggregated metrics you need to collect, ```metric1``` and ```metric2```. You need to collect these metrics every ```5``` minutes at the same time and only after both metrics are retrieved you need to reset DMS. 
-
-You first run the two instnaces of ```dms-collector``` as follows.
-
-```
-dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --url url --connect u/p --table metric1 --emitevents
-dms-collector --count 10 --delay -5 --secsinmin 5 --alignminutes --url url --connect u/p --table metric2 --emitevents
-```
-
-Collection of data for ```metric1``` and ```metric2``` will happen in the 5th second of every 5th minute while the collection time will be aligned to the 5th minute of the hour. Both commands will further emit an event after DMS data is retrieved and you only need to reset DMS when both tables will be retrieved. You can use the below command to achieve this.
-
-```
-dms-collector --count 10 --runonevents 2 --dmsreset --adminurl url --connect u/p 
-```
-
-The above instance will wait for two events sent from the two earlier instances by communicating over a default named pipe ```/tmp/dms-collector-events```. Only after the two events are received, it will call DMS reset operation. If for some reason only one event will be received, such as ```metric2``` will take more time to fetch, there is a default timeout of ```20``` seconds that indicates the maximum time to receive the last event since the first event was received. You can change this value by ```--maxtime``` parameter or disable this timeout by setting ```--maxtime``` to ```0```. The above ```dms-collector``` instance will not accept any events while it is running DMS reset, which in some environments may take several minutes. If you want to change this, you can allow to accept events at any time by setting ```--contacceptevents``` parameter. The default named pipe location can be changed by ```--namedpipe``` parameter, for example, when you need to have the same setup for multiple domains on the same host. 
- 
 ## Login
  
-```dms-collector``` attempts to login by using HTTP basic authentication by default which is required by earlier versions of DMS Spy. If you are collecting data from a DMS Spy of a later version, you need to use ```--loginform``` option which uses a login form and a session cookie to associate DMS requests with a session in DMS Spy. ```dms-collector``` sends only one login request and reuses session cookie for all subsequent requests.
+`dms-collector` uses DMS Spy form login by default. If you are collecting data from a DMS Spy of an earlier version such as FMW infrastructure 11g, you need to use `--basicauth` option which uses HTTP basic authentication.
+ 
+## Changes over previous version 1.1
+
+The version 2.0+ introduces the following changes:
+
+*  It is now possible to use `dms-collector` as a Python module which provides [DmsCollector class](https://github.com/tomvit/dms-collector/blob/v2.0/dms_collector/dms.py) that you can integrate into your Python applications. 
+
+* Several command-line arguments were removed such as linux pipelines and emitting the events, DMS reset and time adjustments.  
+
+You can still access the previous version in [1.1 branch](https://github.com/tomvit/dms-collector/tree/v1.1).
  
 # License
 

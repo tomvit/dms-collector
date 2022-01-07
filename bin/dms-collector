@@ -1,7 +1,6 @@
 #!/bin/bash
 pdir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )
 
-export PYTHONPATH=$pdir
-cd $pdir && python -m dms_collector $@
+python -m dms_collector $@
 
 

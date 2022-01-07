@@ -97,9 +97,9 @@ class DmsCollector():
     def call(self, url):
         if not self.logged_in and not self.basic_auth:
             self.login()
-        if self.basic_auth and self.username is not Node and self.password is not None:
+        if self.basic_auth and self.username is not None and self.password is not None:
             r = self.session.get(url, auth=(self.username, self.password),\
-                timeout=(TIMEOUT_CONNECT, self.readt_imeout),allow_redirects=True)
+                timeout=(TIMEOUT_CONNECT, self.read_timeout),allow_redirects=True)
         else:
             r = self.session.get(url,timeout=(TIMEOUT_CONNECT, self.read_timeout),allow_redirects=True)
         r.raise_for_status()

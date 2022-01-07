@@ -85,7 +85,7 @@ class DmsCollector():
         self.basic_auth = basic_auth
         self.header_cache = {}
     
-    def form_login(self):
+    def login(self):
         headers   = { "User-Agent" : "dms-collector/%s"%__version__ }
         logindata = {"j_username" : self.username, "j_password" : self.password, "j_character_encoding" : "UTF-8" }
         r = self.session.post(DMSLOGIN_URL%(self.admin_url),headers=headers,data=logindata,allow_redirects=True,verify=False)
@@ -96,7 +96,7 @@ class DmsCollector():
 
     def call(self, url):
         if not self.logged_in and not self.basic_auth:
-            self.form_login()
+            self.login()
         if self.basic_auth and self.username is not Node and self.password is not None:
             r = self.session.get(url, auth=(self.username, self.password),\
                 timeout=(TIMEOUT_CONNECT, self.readt_imeout),allow_redirects=True)

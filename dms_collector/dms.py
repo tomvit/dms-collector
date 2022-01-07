@@ -1,11 +1,11 @@
 
-import requests
 import time
-import sys
 import re
-import urllib3
 
 import xml.etree.ElementTree as ET
+
+import urllib3
+import requests
 
 from dms_collector import __version__
 
@@ -23,17 +23,20 @@ DMSLOGIN_URL = "%s/dms/j_security_check"
 TIMEOUT_CONNECT = 3.05
 TIMEOUT_READ = 30
 
-# maximum buffer size that will be read from the pipe at once
-EVENTS_BUFFERSIZE = 1024
-
 
 def is_number(s):
+    '''
+    Checks if the argument is a number.
+    '''
     s = str(s)
     p = re.compile(r'^[\+\-]?[0-9]*(\.[0-9]+)?$')
     return s != '' and p.match(s)
 
 
 def check_positive(value):
+    '''
+    Checks if the number is a positive integer.
+    '''
     ivalue = int(value)
     if ivalue <= 0:
         raise Exception("%s is an invalid positive int value" % value)
@@ -41,6 +44,10 @@ def check_positive(value):
 
 
 def eval_filter(filter, tags, fields):
+    '''
+    Evaluates the filter as a Python expression using tags and fields. It adds 
+    tags and fields to the scope of the filter evaluation.  
+    '''
     try:
         for k, v in tags.items():
             if v is not None:
@@ -49,12 +56,14 @@ def eval_filter(filter, tags, fields):
             if v is not None:
                 exec(k + "=" + str(v))
         return eval(filter)
-    except Exception as e:
-        #sys.stderr.write("Error when evaluating the filter '%s': %s!\n" % (filter, e))
+    except Exception:
         return False
 
 
 def get_tags_fields(row):
+    '''
+    Retrieves tags and fields from the row dict. 
+    '''
     tags = {k: str(v).replace('\n', ' ')
             for k, v in row.items() if not(is_number(v))}
     fields = {k: float(v) for k, v in row.items() if is_number(v)}
@@ -62,38 +71,53 @@ def get_tags_fields(row):
 
 
 def normalize(header, preserve_orig_header):
+    '''
+    Normalizes the header, i.e. replaces dots with underscores. 
+    '''
     if not preserve_orig_header:
         return header.replace(".", "_")
-    else:
-        return header
+    return header
 
 
 def int_or_float_or_str(v):
+    '''
+    Converts the value to int or float. If this is not possible, then it returns 
+    the original value. 
+    '''
     if isinstance(v, str):
         try:
             return int(v)
         except:
             try:
                 return float(v)
-            except:
+            except Exception:
                 return v
     else:
         return v
 
 
 class DmsCollector():
+    '''
+    The main DMS collector class that allows to retrieve a DMS table from DMS Spy application. 
+    '''
 
-    def __init__(self, admin_url, username=None, password=None, basic_auth=False, read_timeout=TIMEOUT_READ):
+    def __init__(self, admin_url, username=None, password=None, basic_auth=False):
+        '''
+        Create the instance of dms collector with admin server url `admin_url` and authentication details `username` and `password`.
+        When you connect to the DMS Spy running on FMW 11g, then you need to set the `basic_auth` to `True`. 
+        '''
         self.logged_in = False
         self.session = requests.session()
         self.admin_url = admin_url
         self.username = username
         self.password = password
-        self.read_timeout = read_timeout
         self.basic_auth = basic_auth
         self.header_cache = {}
 
     def login(self):
+        '''
+        Performs login to the DMS Spy application using the login form.
+        '''
         headers = {"User-Agent": "dms-collector/%s" % __version__}
         logindata = {"j_username": self.username,
                      "j_password": self.password, "j_character_encoding": "UTF-8"}
@@ -105,18 +129,25 @@ class DmsCollector():
         self.logged_in = True
 
     def call(self, url):
+        '''
+        Sends HTTP GET at the specified `url` of the DMS Spy application. When the basic authentication 
+        is enabled, the username and password are added on the request. 
+        '''
         if not self.logged_in and not self.basic_auth:
             self.login()
         if self.basic_auth and self.username is not None and self.password is not None:
             r = self.session.get(url, auth=(self.username, self.password),
-                                 timeout=(TIMEOUT_CONNECT, self.read_timeout), allow_redirects=True)
+                                 timeout=(TIMEOUT_CONNECT, TIMEOUT_READ), allow_redirects=True)
         else:
             r = self.session.get(url, timeout=(
-                TIMEOUT_CONNECT, self.read_timeout), allow_redirects=True)
+                TIMEOUT_CONNECT, TIMEOUT_READ), allow_redirects=True)
         r.raise_for_status()
         return r
 
     def retrieve_data(self, url, check_tbl_version=True):
+        '''
+        Retrieves and parses DMS table data as XML.
+        '''
         r = self.call(url)
 
         # remove the default namespace if it exsits
@@ -132,6 +163,9 @@ class DmsCollector():
         return root
 
     def get_header(self, table, check_tbl_version=True):
+        '''
+        Retrieves a DMS table header.
+        '''
         if table not in self.header_cache:
             root = self.retrieve_data(DMSREQUEST_HEADER % (
                 self.admin_url, table), check_tbl_version=check_tbl_version)
@@ -141,6 +175,12 @@ class DmsCollector():
         return self.header_cache[table]
 
     def collect(self, table, check_tbl_version=True, preserve_orig_header=False, include=[], exclude=[], filter=None):
+        '''
+        Retrieves the DMS table as a list of dict where a dict represents a row with fields and values. 
+        The `include` parameter provides a list of fields that should be included in the result, the `exclude` parameter 
+        provides a list of fields that should be excluded from the result and `filter` defines a Python expression 
+        that is used to filter our the table rows. The expression can contain conditions with table fields.   
+        '''
         start_time = time.time()
 
         header = self.get_header(table, check_tbl_version)
@@ -171,16 +211,13 @@ class DmsCollector():
             if output_row is True:
                 rows.append(row)
 
-        result_dict = {}
-        result_dict["time"] = time.time()
-        result_dict["table"] = table
-        result_dict["url"] = DMSREQUEST_HEADER % (self.admin_url, table)
-        if include is not None and len(include) > 0:
-            result_dict["include"] = include
-        if exclude is not None and len(exclude) > 0:
-            result_dict["exclude"] = exclude
-        if filter is not None:
-            result_dict["filter"] = filter
-        result_dict["query_time"] = time.time()-start_time
-        result_dict["data"] = rows
-        return result_dict
+        return {
+            "time": time.time(),
+            "table": table,
+            "url": DMSREQUEST_HEADER % (self.admin_url, table),
+            "include": include,
+            "exclude": exclude,
+            "filter": filter,
+            "query_time": time.time()-start_time,
+            "data": rows
+        }

@@ -34,7 +34,7 @@ def check_perc(value):
 
 # arguments
 parser = argparse.ArgumentParser(
-    description='Weblogic DMS Spy table metric collector', add_help=False)
+    description='Weblogic DMS Spy table metric collector', add_help=False, prog='dms-collector')
 
 required = parser.add_argument_group('required arguments')
 required.add_argument('--url', required=True,
@@ -85,8 +85,6 @@ otopts.add_argument("-V", '--version', action='version', version='%(prog)s ' +
                     __version__ + ', supports DMS tbml versions: ' + ','.join(TBML_VERSIONS))
 otopts.add_argument('--noversioncheck', required=False,
                     help='do not check tbml version', default=False, action='store_true')
-otopts.add_argument('--readtimeout', required=False, help='htto read timeout, default is %s seconds' %
-                    30, type=float, default=30, metavar='<secs>')
 otopts.add_argument('--basicauth', required=False, default=False, action='store_true',
                     help='use basic authentication instead of form login. This is required for earlier versions of DMS SPy.')
 
@@ -106,7 +104,7 @@ try:
 
     username, password = args.connect.split("/")
     dms = DmsCollector(args.url, username=username, password=password,
-                       basic_auth=args.basicauth, read_timeout=args.readtimeout)
+                       basic_auth=args.basicauth)
 
     args.datetimefield = args.datetimefield.strip()
     args.timezonefield = args.timezonefield.strip()

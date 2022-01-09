@@ -39,16 +39,16 @@ parser = argparse.ArgumentParser(
 required = parser.add_argument_group('required arguments')
 required.add_argument('--url', required=True,
                       help='Weblogic admin server url where DMS Spy is running', metavar='<url>')
-required.add_argument('--connect', required=False,
+required.add_argument('--connect', required=True,
                       help='username/password to login to DMS Spy', metavar='<u/p>')
-required.add_argument('--count', required=True,
-                      help='number of runs the data will be retrieved from DMS', metavar='<num>', type=check_positive)
-required.add_argument('--delay', help='delay between runs',
-                      default=0, type=int, metavar='<seconds>')
-required.add_argument('--table', help='name of a valid DMS table which data to be retrieved',
+required.add_argument('--table', help='name of a valid DMS table which data to be retrieved', required=True,
                       default=None, metavar='<tablename>')
 
-group1 = parser.add_argument_group('optional delay adjustments arguments')
+group1 = parser.add_argument_group('optional count and delay arguments')
+required.add_argument('--count', required=False, default=1,
+                      help='number of runs the data will be retrieved from DMS', metavar='<num>', type=check_positive)
+required.add_argument('--delay', help='delay between runs',
+                      default=60, type=int, metavar='<seconds>')
 group1.add_argument('--nodelayadjust', required=False,
                     help='disables delay time adjustment', default=False, action='store_true')
 group1.add_argument('--nodelayperc', metavar='<perc>', default=0.7, type=check_perc, required=False,

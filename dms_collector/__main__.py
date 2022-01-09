@@ -41,13 +41,13 @@ required.add_argument('--url', required=True,
                       help='Weblogic admin server url where DMS Spy is running', metavar='<url>')
 required.add_argument('--connect', required=True,
                       help='username/password to login to DMS Spy', metavar='<u/p>')
-required.add_argument('--table', help='name of a valid DMS table which data to be retrieved', required=True,
+required.add_argument('-t','--table', help='name of a valid DMS table which data to be retrieved', required=True,
                       default=None, metavar='<tablename>')
 
 group1 = parser.add_argument_group('optional count and delay arguments')
-required.add_argument('--count', required=False, default=1,
+group1.add_argument('-c','--count', required=False, default=1,
                       help='number of runs the data will be retrieved from DMS', metavar='<num>', type=check_positive)
-required.add_argument('--delay', help='delay between runs',
+group1.add_argument('-d','--delay', help='delay between runs',
                       default=60, type=int, metavar='<seconds>')
 group1.add_argument('--nodelayadjust', required=False,
                     help='disables delay time adjustment', default=False, action='store_true')

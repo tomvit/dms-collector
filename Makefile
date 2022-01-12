@@ -11,7 +11,7 @@ build:
 	python setup.py egg_info sdist	
 
 check:
-	pylint dms_collector 
+	pylint dms_collector -E
 
 clean:
 	rm -fr build

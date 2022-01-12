@@ -1,4 +1,4 @@
-# $dms-collector
+# $ dms-collector
 
 DMS is a Weblogic Dynamic Monitoring Service providing a massive amount of sensors about Weblogic and application components performance.
 It can be accessed in a number of ways, such as Weblogic Scripting Tool (wlst), Java API or DMS Spy application. DMS Spy is used to access DMS metric tables by using a browser while it also provides endpoints to retrieve metric tables in XML format.

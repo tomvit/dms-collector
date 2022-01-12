@@ -164,11 +164,14 @@ class DmsCollector():
 
     def get_header(self, table, check_tbl_version=True):
         '''
-        Retrieves a DMS table header.
+        Retrieves a DMS table header. If the table does not exist then it raises an error.
         '''
         if table not in self.header_cache:
             root = self.retrieve_data(DMSREQUEST_HEADER % (
                 self.admin_url, table), check_tbl_version=check_tbl_version)
+            te = root.find("./table")    
+            if te is None or te.get("name") != table:
+                raise Exception(f"The table '{table}' does not exist!")
             cdef = root.findall(".//columndef")
             fields = [x.get("name") for x in cdef]
             self.header_cache[table] = fields

@@ -15,7 +15,7 @@ pip install dms-collector
 
 ## Usage
 
-You can use dms-collector CLI to query the DMS Spy running at https://wls-domain with username `weblogic` and password `password1` by running the following command: 
+You can use dms-collector CLI to query the DMS Spy running at `https://wls-domain` with username `weblogic` and password `password1` by running the following command: 
 
 ```
 $ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory

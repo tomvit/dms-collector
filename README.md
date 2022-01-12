@@ -37,13 +37,15 @@ For the full list of options please run `dms-collector --help`.
 If you want to exclude certain fields from the output, such as `Process` and `Parent`, run the following command:
 
 ```
-$ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory --exclude Process,Parent
+$ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory \
+  --exclude Process,Parent
 ```
 
 If you want to only return rows that match a certain criteria, such as a server name, run the following command:
 
 ```
-$ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"
+$ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory \
+  --filter "bool(re.match(r\"WLS_SOA[0-9]+\",str(ServerName)))"
 ```
 
 The `--filter` parameter accepts any valid Python expression with variable names matching table's header names. You can use all header names regardless whether they are included or excluded from the output.   

@@ -20,10 +20,10 @@ You can use dms-collector CLI to query the DMS Spy running at https://wls-domain
 ```
 $ dms-collector --url https://wls-domain --connect weblogic/password1 --table JVM_Memory
 datetime,timezone,Host,Parent,ServerName,pendingFinalization_value,verbose_value,Process,JVM,Name
-"22-01-12 11:23:30",+0100,"aabc-12c-3.vodafoneoci.com","/JVM/MxBeans","AdminServer",0,"TRUE","AdminServer:7101","JVM","memory"
-"22-01-12 11:23:30",+0100,"fmw-upgrade-poc-app10.ccsapptier.ccsvcn01.oraclevcn.com","/JVM/MxBeans","soa_server2",0,"TRUE","soa_server2:8102","JVM","memory"
-"22-01-12 11:23:30",+0100,"fmw-upgrade-poc-app10.ccsapptier.ccsvcn01.oraclevcn.com","/JVM/MxBeans","proc15010",0,"FALSE","machine2:15010","JVM","memory"
-"22-01-12 11:23:30",+0100,"aabc-12c-3.vodafoneoci.com","/JVM/MxBeans","proc69725",0,"FALSE","machine1:69725","JVM","memory"
+"22-01-12 11:23:30",+0100,"domain-3.oraclevnc.com","/JVM/MxBeans","AdminServer",0,"TRUE","AdminServer:7101","JVM","memory"
+"22-01-12 11:23:30",+0100,"fmw-poc-app10.oraclevcn.com","/JVM/MxBeans","soa_server2",0,"TRUE","soa_server2:8102","JVM","memory"
+"22-01-12 11:23:30",+0100,"fmw-poc-app10.oraclevcn.com","/JVM/MxBeans","proc15010",0,"FALSE","machine2:15010","JVM","memory"
+"22-01-12 11:23:30",+0100,"domain-3.oraclevcn.com","/JVM/MxBeans","proc69725",0,"FALSE","machine1:69725","JVM","memory"
 ```
 
 ## CLI Options

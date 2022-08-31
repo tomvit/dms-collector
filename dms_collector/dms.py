@@ -1,6 +1,7 @@
 
 import time
 import re
+import os
 
 import xml.etree.ElementTree as ET
 
@@ -22,6 +23,9 @@ DMSLOGIN_URL = "%s/dms/j_security_check"
 # timeout to read data from dms spy
 TIMEOUT_CONNECT = 3.05
 TIMEOUT_READ = 30
+
+# HTML CLEANER RE
+CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
 
 
 def is_number(s):
@@ -45,8 +49,8 @@ def check_positive(value):
 
 def eval_filter(filter, tags, fields):
     '''
-    Evaluates the filter as a Python expression using tags and fields. It adds 
-    tags and fields to the scope of the filter evaluation.  
+    Evaluates the filter as a Python expression using tags and fields. It adds
+    tags and fields to the scope of the filter evaluation.
     '''
     try:
         for k, v in tags.items():
@@ -62,17 +66,17 @@ def eval_filter(filter, tags, fields):
 
 def get_tags_fields(row):
     '''
-    Retrieves tags and fields from the row dict. 
+    Retrieves tags and fields from the row dict.
     '''
     tags = {k: str(v).replace('\n', ' ')
-            for k, v in row.items() if not(is_number(v))}
+            for k, v in row.items() if not (is_number(v))}
     fields = {k: float(v) for k, v in row.items() if is_number(v)}
     return tags, fields
 
 
 def normalize(header, preserve_orig_header):
     '''
-    Normalizes the header, i.e. replaces dots with underscores. 
+    Normalizes the header, i.e. replaces dots with underscores.
     '''
     if not preserve_orig_header:
         return header.replace(".", "_")
@@ -81,8 +85,8 @@ def normalize(header, preserve_orig_header):
 
 def int_or_float_or_str(v):
     '''
-    Converts the value to int or float. If this is not possible, then it returns 
-    the original value. 
+    Converts the value to int or float. If this is not possible, then it returns
+    the original value.
     '''
     if isinstance(v, str):
         try:
@@ -96,15 +100,22 @@ def int_or_float_or_str(v):
         return v
 
 
+def cleanhtml(html_string):
+    '''
+    Removes html markup from the string.
+    '''
+    return re.sub(CLEANR, '', html_string)
+
+
 class DmsCollector():
     '''
-    The main DMS collector class that allows to retrieve a DMS table from DMS Spy application. 
+    The main DMS collector class that allows to retrieve a DMS table from DMS Spy application.
     '''
 
-    def __init__(self, admin_url, username=None, password=None, basic_auth=False):
+    def __init__(self, admin_url, username=None, password=None, basic_auth=False, file_cache=None, store_to_cache=False):
         '''
         Create the instance of dms collector with admin server url `admin_url` and authentication details `username` and `password`.
-        When you connect to the DMS Spy running on FMW 11g, then you need to set the `basic_auth` to `True`. 
+        When you connect to the DMS Spy running on FMW 11g, then you need to set the `basic_auth` to `True`.
         '''
         self.logged_in = False
         self.session = requests.session()
@@ -113,6 +124,8 @@ class DmsCollector():
         self.password = password
         self.basic_auth = basic_auth
         self.header_cache = {}
+        self.file_cache = file_cache
+        self.store_to_cache = store_to_cache
 
     def login(self):
         '''
@@ -130,8 +143,8 @@ class DmsCollector():
 
     def call(self, url):
         '''
-        Sends HTTP GET at the specified `url` of the DMS Spy application. When the basic authentication 
-        is enabled, the username and password are added on the request. 
+        Sends HTTP GET at the specified `url` of the DMS Spy application. When the basic authentication
+        is enabled, the username and password are added on the request.
         '''
         if not self.logged_in and not self.basic_auth:
             self.login()
@@ -155,45 +168,67 @@ class DmsCollector():
         xmlstring = r.text
         xmlstring = re.sub(r'\sxmlns="[^"]+"', '', xmlstring, count=1)
         root = ET.fromstring(xmlstring)
-        if not(check_tbl_version):
+        if not (check_tbl_version):
             tbml_version = root.get("version")
             if tbml_version not in TBML_VERSIONS:
                 raise Exception("Data retrieved are of not supported tbml version %s. Supported versions are: %s"
                                 % (tbml_version, ','.join(TBML_VERSIONS)))
-        return root
+        return root, xmlstring
+
+    def table_file(self, table):
+        if self.file_cache is not None:
+            return os.path.join(self.file_cache, table)
+        else:
+            return None
 
     def get_header(self, table, check_tbl_version=True):
         '''
         Retrieves a DMS table header. If the table does not exist then it raises an error.
         '''
         if table not in self.header_cache:
-            root = self.retrieve_data(DMSREQUEST_HEADER % (
-                self.admin_url, table), check_tbl_version=check_tbl_version)
-            te = root.find("./table")    
+            # try to retrieve the table from the file cache and write to the file cache if enabled
+            root = None
+            table_file = self.table_file(table)
+            if table_file is not None and os.path.exists(table_file):
+                with open(table_file, "r") as r:
+                    lines = r.readlines()
+                root = ET.fromstring("\n".join(lines))
+            if root is None:
+                root, xmlstring = self.retrieve_data(DMSREQUEST_HEADER % (
+                    self.admin_url, table), check_tbl_version=check_tbl_version)
+                if table_file is not None and self.store_to_cache:
+                    with open(table_file, "w") as w:
+                        w.writelines(xmlstring)
+
+            te = root.find("./table")
             if te is None or te.get("name") != table:
                 raise Exception(f"The table '{table}' does not exist!")
             cdef = root.findall(".//columndef")
-            fields = [x.get("name") for x in cdef]
-            self.header_cache[table] = fields
+            items = {}
+            for x in cdef:
+                d = x.find("description")
+                items[x.get("name")] = cleanhtml(
+                    d.text).strip() if d is not None else "n/a"
+            self.header_cache[table] = items
         return self.header_cache[table]
 
     def collect(self, table, check_tbl_version=True, preserve_orig_header=False, include=[], exclude=[], filter=None):
         '''
-        Retrieves the DMS table as a list of dict where a dict represents a row with fields and values. 
-        The `include` parameter provides a list of fields that should be included in the result, the `exclude` parameter 
-        provides a list of fields that should be excluded from the result and `filter` defines a Python expression 
-        that is used to filter our the table rows. The expression can contain conditions with table fields.   
+        Retrieves the DMS table as a list of dict where a dict represents a row with fields and values.
+        The `include` parameter provides a list of fields that should be included in the result, the `exclude` parameter
+        provides a list of fields that should be excluded from the result and `filter` defines a Python expression
+        that is used to filter our the table rows. The expression can contain conditions with table fields.
         '''
         start_time = time.time()
 
         header = self.get_header(table, check_tbl_version)
-        root = self.retrieve_data(DMSREQUEST_DATA % (
+        root, _ = self.retrieve_data(DMSREQUEST_DATA % (
             self.admin_url, table), check_tbl_version=check_tbl_version)
 
         rows = []
         for rw in root.findall(".//row"):
             row = {}
-            for key in header:
+            for key in header.keys():
                 nkey = normalize(
                     key, preserve_orig_header=preserve_orig_header)
                 if (nkey not in exclude and len(include) == 0) or nkey in include:

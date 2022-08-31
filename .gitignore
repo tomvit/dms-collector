@@ -3,3 +3,5 @@ __pycache__
 *.pyc
 dist
 dms_collector.egg-info
+env
+build

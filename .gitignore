@@ -5,3 +5,4 @@ dist
 dms_collector.egg-info
 env
 build
+.DS_Store

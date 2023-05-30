@@ -6,3 +6,4 @@ dms_collector.egg-info
 env
 build
 .DS_Store
+.python-version

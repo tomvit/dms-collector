@@ -34,11 +34,15 @@ def find_version(*file_paths):
 
 # setup main
 # required modules
-install_requires = ["urllib3==1.26.8", "requests==2.27.1"]
+install_requires = ["urllib3>=2.0.2", "requests>=2.31.0", "setuptools_scm>=6.3.2"]
 
 setup(
     name="dms-collector",
-    version=find_version("dms_collector", "__init__.py"),
+    use_scm_version={
+        "root": ".",
+        "relative_to": __file__,
+        "local_scheme": "node-and-timestamp",
+    },
     description="Oracle FMW DMS Spy collector utility",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -47,7 +51,7 @@ setup(
     packages=find_packages(exclude=["tests.*", "tests"]),
     include_package_data=True,
     install_requires=install_requires,
-    python_requires=">=3.5.0",
+    python_requires=">=3.6.0",
     scripts=["bin/dms-collector"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

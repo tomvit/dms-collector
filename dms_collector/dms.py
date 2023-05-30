@@ -151,7 +151,7 @@ class DmsCollector:
         """
         Performs login to the DMS Spy application using the login form.
         """
-        headers = {"User-Agent": "dms-collector/%s" % version()}
+        headers = {"User-Agent": "dms-collector/%s" % dms_version()}
         logindata = {
             "j_username": self.username,
             "j_password": self.password,
@@ -247,9 +247,7 @@ class DmsCollector:
             items = {}
             for x in cdef:
                 d = x.find("description")
-                items[x.get("name")] = (
-                    cleanhtml(d.text).strip() if d is not None else "n/a"
-                )
+                items[x.get("name")] = cleanhtml(d.text).strip() if d is not None else "n/a"
             self.header_cache[table] = items
         return self.header_cache[table]
 

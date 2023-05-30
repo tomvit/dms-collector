@@ -2,7 +2,7 @@
 
 ## version 2.0.3
 
-* Read and connect timeouts options in `DmsCollector` class.
+* Read and connect timeouts options.
 
 ## version 2.0.2
 

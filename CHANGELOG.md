@@ -1,5 +1,9 @@
 # dms-collector changelog
 
+## version 2.0.4
+
+* package build using wheel
+
 ## version 2.0.3
 
 * Read and connect timeouts options.

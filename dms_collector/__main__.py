@@ -173,17 +173,12 @@ foopts.add_argument(
 )
 
 otopts = parser.add_argument_group("optional other arguments")
-otopts.add_argument(
-    "-h", "--help", action="help", help="show this help message and exit"
-)
+otopts.add_argument("-h", "--help", action="help", help="show this help message and exit")
 otopts.add_argument(
     "-V",
     "--version",
     action="version",
-    version="%(prog)s "
-    + dms_version()
-    + ", supports DMS tbml versions: "
-    + ",".join(TBML_VERSIONS),
+    version="%(prog)s " + dms_version() + ", supports DMS tbml versions: " + ",".join(TBML_VERSIONS),
 )
 otopts.add_argument(
     "--noversioncheck",
@@ -204,6 +199,7 @@ otopts.add_argument(
     required=False,
     default=TIMEOUT_READ,
     metavar="<seconds>",
+    type=float,
     help="Read timeout for HTTP requests",
 )
 otopts.add_argument(
@@ -211,6 +207,7 @@ otopts.add_argument(
     required=False,
     default=TIMEOUT_CONNECT,
     metavar="<seconds>",
+    type=float,
     help="Connection timeout for HTTP requests",
 )
 
@@ -226,8 +223,7 @@ try:
     checkPattern(
         args.url,
         r"^(https?:)//([A-Za-z0-9\-\.\_]+)(:[0-9]+)?/?$",
-        "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]"
-        % args.url,
+        "The admin url address '%s' is invalid! It should be in a form http(s)://hostname[:port]" % args.url,
     )
     checkPattern(
         args.connect,
@@ -276,12 +272,7 @@ try:
             sys.stdout.flush()
 
         for row in table["data"]:
-            r = args.csvdelimiter.join(
-                [
-                    str(strinquotes(x))
-                    for x in [stime, tzone] + [x for x in row.values()]
-                ]
-            )
+            r = args.csvdelimiter.join([str(strinquotes(x)) for x in [stime, tzone] + [x for x in row.values()]])
 
             if len(r) > 0:
                 sys.stdout.write(r + "\n")

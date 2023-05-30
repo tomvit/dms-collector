@@ -8,7 +8,7 @@ help:
 	@echo ""
 
 build:
-	python setup.py egg_info sdist	
+	python setup.py bdist_wheel	
 
 check:
 	pylint dms_collector -E

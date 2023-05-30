@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import urllib3
 import requests
 
-from dms_collector import __version__
+from importlib.metadata import version, PackageNotFoundError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -25,6 +25,16 @@ TIMEOUT_READ = 30
 
 # HTML CLEANER RE
 CLEANR = re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
+
+
+def dms_version():
+    """
+    Return the version number of the package.
+    """
+    try:
+        return version("dms-collector")
+    except PackageNotFoundError as e:
+        return "unknown"
 
 
 def is_number(s):
@@ -118,6 +128,8 @@ class DmsCollector:
         basic_auth=False,
         file_cache=None,
         store_to_cache=False,
+        read_timeout=TIMEOUT_READ,
+        connect_timeout=TIMEOUT_CONNECT,
     ):
         """
         Create the instance of dms collector with admin server url `admin_url` and authentication details `username` and `password`.
@@ -132,12 +144,14 @@ class DmsCollector:
         self.header_cache = {}
         self.file_cache = file_cache
         self.store_to_cache = store_to_cache
+        self.read_timeout = read_timeout
+        self.connect_timeout = connect_timeout
 
     def login(self):
         """
         Performs login to the DMS Spy application using the login form.
         """
-        headers = {"User-Agent": "dms-collector/%s" % __version__}
+        headers = {"User-Agent": "dms-collector/%s" % version()}
         logindata = {
             "j_username": self.username,
             "j_password": self.password,
@@ -149,6 +163,7 @@ class DmsCollector:
             data=logindata,
             allow_redirects=True,
             verify=False,
+            timeout=(self.connect_timeout, self.read_timeout),
         )
         r.raise_for_status()
         if len([x.url for x in r.history]) == 1:
@@ -166,12 +181,14 @@ class DmsCollector:
             r = self.session.get(
                 url,
                 auth=(self.username, self.password),
-                timeout=(TIMEOUT_CONNECT, TIMEOUT_READ),
+                timeout=(self.connect_timeout, self.read_timeout),
                 allow_redirects=True,
             )
         else:
             r = self.session.get(
-                url, timeout=(TIMEOUT_CONNECT, TIMEOUT_READ), allow_redirects=True
+                url,
+                timeout=(self.connect_timeout, self.read_timeout),
+                allow_redirects=True,
             )
         r.raise_for_status()
         return r

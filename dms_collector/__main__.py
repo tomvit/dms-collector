@@ -3,11 +3,14 @@ import re
 import time
 import sys
 
-from dms_collector import DmsCollector, TBML_VERSIONS
-
-from dms_collector import __version__
-
-from .dms import is_number
+from .dms import (
+    is_number,
+    DmsCollector,
+    TBML_VERSIONS,
+    dms_version,
+    TIMEOUT_READ,
+    TIMEOUT_CONNECT,
+)
 
 
 def checkPattern(str, pattern, errormsg):
@@ -178,7 +181,7 @@ otopts.add_argument(
     "--version",
     action="version",
     version="%(prog)s "
-    + __version__
+    + dms_version()
     + ", supports DMS tbml versions: "
     + ",".join(TBML_VERSIONS),
 )
@@ -195,6 +198,20 @@ otopts.add_argument(
     default=False,
     action="store_true",
     help="use basic authentication instead of form login. This is required for earlier versions of DMS SPy.",
+)
+otopts.add_argument(
+    "--read-timeout",
+    required=False,
+    default=TIMEOUT_READ,
+    metavar="<seconds>",
+    help="Read timeout for HTTP requests",
+)
+otopts.add_argument(
+    "--connect-timeout",
+    required=False,
+    default=TIMEOUT_CONNECT,
+    metavar="<seconds>",
+    help="Connection timeout for HTTP requests",
 )
 
 try:
@@ -220,7 +237,12 @@ try:
 
     username, password = args.connect.split("/")
     dms = DmsCollector(
-        args.url, username=username, password=password, basic_auth=args.basicauth
+        args.url,
+        username=username,
+        password=password,
+        basic_auth=args.basicauth,
+        read_timeout=args.read_timeout,
+        connect_timeout=args.connect_timeout,
     )
 
     args.datetimefield = args.datetimefield.strip()

@@ -8,7 +8,8 @@ help:
 	@echo ""
 
 build:
-	python setup.py bdist_wheel	
+	python setup.py bdist_wheel
+	rm -fr build	
 
 check:
 	pylint dms_collector -E

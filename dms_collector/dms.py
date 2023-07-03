@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 import urllib3
 import requests
 
+from xml.etree.ElementTree import ParseError
 from importlib.metadata import version, PackageNotFoundError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -268,11 +269,14 @@ class DmsCollector:
         """
         start_time = time.time()
 
-        header = self.get_header(table, check_tbl_version)
-        root, _ = self.retrieve_data(
-            DMSREQUEST_DATA % (self.admin_url, table),
-            check_tbl_version=check_tbl_version,
-        )
+        try:
+            header = self.get_header(table, check_tbl_version)
+            root, _ = self.retrieve_data(
+                DMSREQUEST_DATA % (self.admin_url, table),
+                check_tbl_version=check_tbl_version,
+            )
+        except ParseError as e:
+            raise Exception(f"Cannot parse table data '{table}'. The data is empty or invalid. {e}")
 
         rows = []
         for rw in root.findall(".//row"):

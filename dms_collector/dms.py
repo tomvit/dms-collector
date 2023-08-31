@@ -29,18 +29,34 @@ CLEANR = re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
 
 
 class LoginError(Exception):
+    """
+    Exception raised when the login to the DMS Spy application fails.
+    """
+
     pass
 
 
 class TableNotExistError(Exception):
+    """
+    Exception raised when the table does not exist.
+    """
+
     pass
 
 
 class DataParserError(Exception):
+    """
+    Exception raised when the data cannot be parsed.
+    """
+
     pass
 
 
 class DataVersionError(Exception):
+    """
+    Exception raised when the data version is not supported.
+    """
+
     pass
 
 

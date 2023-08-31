@@ -28,6 +28,22 @@ TIMEOUT_READ = 30
 CLEANR = re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
 
 
+class LoginError(Exception):
+    pass
+
+
+class TableNotExistError(Exception):
+    pass
+
+
+class DataParserError(Exception):
+    pass
+
+
+class DataVersionError(Exception):
+    pass
+
+
 def dms_version():
     """
     Return the version number of the package.
@@ -168,7 +184,7 @@ class DmsCollector:
         )
         r.raise_for_status()
         if len([x.url for x in r.history]) == 1:
-            raise Exception("Wrong username or password. Login failed!")
+            raise LoginError("Wrong username or password. Login failed!")
         self.logged_in = True
 
     def call(self, url):
@@ -208,7 +224,7 @@ class DmsCollector:
         if not (check_tbl_version):
             tbml_version = root.get("version")
             if tbml_version not in TBML_VERSIONS:
-                raise Exception(
+                raise DataVersionError(
                     "Data retrieved are of not supported tbml version %s. Supported versions are: %s"
                     % (tbml_version, ",".join(TBML_VERSIONS))
                 )
@@ -243,7 +259,7 @@ class DmsCollector:
 
             te = root.find("./table")
             if te is None or te.get("name") != table:
-                raise Exception(f"The table '{table}' does not exist!")
+                raise TableNotExistError(f"The table '{table}' does not exist!")
             cdef = root.findall(".//columndef")
             items = {}
             for x in cdef:
@@ -276,7 +292,7 @@ class DmsCollector:
                 check_tbl_version=check_tbl_version,
             )
         except ParseError as e:
-            raise Exception(f"Cannot parse table data '{table}'. The data is empty or invalid. {e}")
+            raise DataParserError(f"Cannot parse table data '{table}'. The data is empty or invalid. {e}")
 
         rows = []
         for rw in root.findall(".//row"):
